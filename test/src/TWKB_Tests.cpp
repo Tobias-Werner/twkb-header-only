@@ -21,8 +21,8 @@ TEST_CASE("Binary encoding") {
         vector<unsigned int> testValues({0, 300, 12434, 324345345});
 
         for (auto &testValue : testValues) {
-            bytes_t bytes = Geometry::encodeVarint(testValue);
-            CHECK(Geometry::decodeVarint(bytes) == testValue);
+            bytes_t bytes = GeomFactory::encodeVarint(testValue);
+            CHECK(GeomFactory::decodeVarint(bytes) == testValue);
         }
 
     }
@@ -31,52 +31,133 @@ TEST_CASE("Binary encoding") {
         vector<int> testValues({0, 300, -300, 2545645, -2545645});
 
         for (auto &testValue : testValues) {
-            unsigned int encoded = Geometry::encodeZigZag(testValue);
-            CHECK(Geometry::decodeZigZag(encoded) == testValue);
+            unsigned int encoded = GeomFactory::encodeZigZag(testValue);
+            CHECK(GeomFactory::decodeZigZag(encoded) == testValue);
         }
     }
-
 
 }
 
 
-TEST_CASE("Parsing geometries") {
+TEST_CASE("Creating point geometries") {
 
-    SECTION("Point") {
+    SECTION("Creating point XY") {
 
-        Point point(7.615752, 53.932254, 6);
-        bytes_t target = bytes_t({0xC1, 0x00, 0x90, 0xD4, 0xA1, 0x07, 0xBC, 0xC3, 0xB7, 0x33});
+        GeomFactory factory;
 
-        for (size_t i = 0; i < point.getBytes().size(); i++) {
-            cout << hex << point.getBytes()[i] << " <-> " << target[i] << endl;
-            CHECK(point.getBytes()[i] == target[i]);
+        PosXY pos(7.625752, 53.942254);
+        bytes_t twkb = factory.makePoint(pos, 6);
+
+        // SELECT ST_AsTWKB('POINT(7.625752 53.942254)'::geometry, 6) as binary;
+        bytes_t targetTwkb = bytes_t({0xC1, 0x00, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33});
+
+        for (size_t i = 0; i < targetTwkb.size(); i++) {
+            cout << hex << twkb[i] << " <-> " << targetTwkb[i] << endl;
+            CHECK(twkb[i] == targetTwkb[i]);
         }
-
-
     }
 
-    SECTION("Line") {
-        // TODO
+
+    SECTION("Creating point XYZ") {
+
+        GeomFactory factory;
+
+        PosXYZ pos(7.625752, 53.942254, 10.175);
+        bytes_t twkb = factory.makePoint(pos, 6, 3);
+
+        // SELECT ST_AsTWKB('POINT(7.625752 53.942254 10.175)'::geometry, 6, 3) as binary;
+        bytes_t targetTwkb = bytes_t({0xC1, 0x08, 0x0D, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0xFE, 0x9E, 0x01});
+
+        for (size_t i = 0; i < targetTwkb.size(); i++) {
+            cout << hex << twkb[i] << " <-> " << targetTwkb[i] << endl;
+            CHECK(twkb[i] == targetTwkb[i]);
+        }
     }
 
-    SECTION("Polygon") {
-        // TODO
-    }
+    SECTION("Creating point XYZT") {
 
+        GeomFactory factory;
+
+        PosXYZT pos(7.625752, 53.942254, 10.175, 164.0);
+        bytes_t twkb = factory.makePoint(pos, 6, 3, 0);
+
+        // SELECT ST_AsTWKB('POINT(7.625752 53.942254 10.175 164.0)'::geometry, 6, 3, 0) as binary;
+        bytes_t targetTwkb = bytes_t({0xC1, 0x08, 0x0F, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0xFE, 0x9E, 0x01, 0xC8, 0x02});
+
+        for (size_t i = 0; i < targetTwkb.size(); i++) {
+            cout << hex << twkb[i] << " <-> " << targetTwkb[i] << endl;
+            CHECK(twkb[i] == targetTwkb[i]);
+        }
+    }
 }
 
-TEST_CASE("Parsing binaries") {
+TEST_CASE("Creating line geometries") {
 
-    SECTION("Point") {
-        // TODO
+    SECTION("Creating line XY") {
+        GeomFactory factory;
+
+        PosXY pos1(7.625752, 53.942254);
+        PosXY pos2(7.615752, 53.932254);
+        PosXY pos3(7.532752, 53.915354);
+
+        vector<PosXY> locations({pos1, pos2, pos3});
+
+        bytes_t twkb = factory.makeLine(locations, 6);
+
+        // SELECT ST_AsTWKB('LINESTRING(7.625752 53.942254, 7.615752 53.932254, 7.532752 53.915354)'::geometry, 6) as binary;
+        bytes_t targetTwkb = bytes_t({0xC2, 0x00, 0x03, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0x9F, 0x9C, 0x01, 0x9F, 0x9C, 0x01, 0xEF, 0x90, 0x0A, 0x87, 0x88, 0x02});
+
+        for (size_t i = 0; i < targetTwkb.size(); i++) {
+            cout << hex << twkb[i] << " <-> " << targetTwkb[i] << endl;
+            CHECK(twkb[i] == targetTwkb[i]);
+        }
+
     }
 
-    SECTION("Line") {
-        // TODO
+    SECTION("Creating line XYZ") {
+        GeomFactory factory;
+
+        PosXYZ pos1(7.625752, 53.942254, 10.175);
+        PosXYZ pos2(7.615752, 53.932254, 10.231);
+        PosXYZ pos3(7.532752, 53.915354, 10.335);
+
+        vector<PosXYZ> locations({pos1, pos2, pos3});
+
+        bytes_t twkb = factory.makeLine(locations, 6, 3);
+
+        // SELECT ST_AsTWKB('LINESTRING(7.625752 53.942254 10.175, 7.615752 53.932254 10.231, 7.532752 53.915354 10.335)'::geometry, 6, 3) as binary;
+        bytes_t targetTwkb = bytes_t(
+                {0xC2, 0x08, 0x0D, 0x03, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0xFE, 0x9E, 0x01, 0x9F, 0x9C, 0x01, 0x9F, 0x9C, 0x01, 0x70, 0xEF, 0x90, 0x0A, 0x87, 0x88,
+                 0x02, 0xD0, 0x01});
+
+        for (size_t i = 0; i < targetTwkb.size(); i++) {
+            cout << hex << twkb[i] << " <-> " << targetTwkb[i] << endl;
+            CHECK(twkb[i] == targetTwkb[i]);
+        }
+
     }
 
-    SECTION("Polygon") {
-        // TODO
+    SECTION("Creating line XYZT") {
+        GeomFactory factory;
+
+        PosXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
+        PosXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
+        PosXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
+
+        vector<PosXYZT> locations({pos1, pos2, pos3});
+
+        bytes_t twkb = factory.makeLine(locations, 6, 3, 0);
+
+        // SELECT ST_AsTWKB('LINESTRING(7.625752 53.942254 10.175, 7.615752 53.932254 10.231, 7.532752 53.915354 10.335)'::geometry, 6, 3) as binary;
+        bytes_t targetTwkb = bytes_t(
+                {0xC2, 0x08, 0x0F, 0x03, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0xFE, 0x9E, 0x01, 0xC8, 0x02, 0x9F, 0x9C, 0x01, 0x9F, 0x9C, 0x01, 0x70, 0x02, 0xEF, 0x90,
+                 0x0A, 0x87, 0x88, 0x02, 0xD0, 0x01, 0x02});
+
+        for (size_t i = 0; i < targetTwkb.size(); i++) {
+            cout << hex << twkb[i] << " <-> " << targetTwkb[i] << endl;
+            CHECK(twkb[i] == targetTwkb[i]);
+        }
+
     }
 
 }
