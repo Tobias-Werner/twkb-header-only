@@ -51,10 +51,7 @@ TEST_CASE("Creating point geometries") {
         // SELECT ST_AsTWKB('POINT(7.625752 53.942254)'::geometry, 6) as binary;
         bytes_t targetTwkb = bytes_t({0xC1, 0x00, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33});
 
-        for (size_t i = 0; i < targetTwkb.size(); i++) {
-            cout << hex << twkb[i] << " <-> " << targetTwkb[i] << endl;
-            CHECK(twkb[i] == targetTwkb[i]);
-        }
+        CHECK(twkb == targetTwkb);
     }
 
 
@@ -68,10 +65,7 @@ TEST_CASE("Creating point geometries") {
         // SELECT ST_AsTWKB('POINT(7.625752 53.942254 10.175)'::geometry, 6, 3) as binary;
         bytes_t targetTwkb = bytes_t({0xC1, 0x08, 0x0D, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0xFE, 0x9E, 0x01});
 
-        for (size_t i = 0; i < targetTwkb.size(); i++) {
-            cout << hex << twkb[i] << " <-> " << targetTwkb[i] << endl;
-            CHECK(twkb[i] == targetTwkb[i]);
-        }
+        CHECK(twkb == targetTwkb);
     }
 
     SECTION("Creating point XYZT") {
@@ -84,10 +78,7 @@ TEST_CASE("Creating point geometries") {
         // SELECT ST_AsTWKB('POINT(7.625752 53.942254 10.175 164.0)'::geometry, 6, 3, 0) as binary;
         bytes_t targetTwkb = bytes_t({0xC1, 0x08, 0x0F, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0xFE, 0x9E, 0x01, 0xC8, 0x02});
 
-        for (size_t i = 0; i < targetTwkb.size(); i++) {
-            cout << hex << twkb[i] << " <-> " << targetTwkb[i] << endl;
-            CHECK(twkb[i] == targetTwkb[i]);
-        }
+        CHECK(twkb == targetTwkb);
     }
 }
 
@@ -102,15 +93,32 @@ TEST_CASE("Creating line geometries") {
 
         vector<PosXY> locations({pos1, pos2, pos3});
 
-        bytes_t twkb = factory.makeLine(locations, 6);
+        bytes_t twkb = factory.makeLine(locations, 6, false);
 
         // SELECT ST_AsTWKB('LINESTRING(7.625752 53.942254, 7.615752 53.932254, 7.532752 53.915354)'::geometry, 6) as binary;
         bytes_t targetTwkb = bytes_t({0xC2, 0x00, 0x03, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0x9F, 0x9C, 0x01, 0x9F, 0x9C, 0x01, 0xEF, 0x90, 0x0A, 0x87, 0x88, 0x02});
 
-        for (size_t i = 0; i < targetTwkb.size(); i++) {
-            cout << hex << twkb[i] << " <-> " << targetTwkb[i] << endl;
-            CHECK(twkb[i] == targetTwkb[i]);
-        }
+        CHECK(twkb == targetTwkb);
+
+    }
+
+    SECTION("Creating line XY - with bbox") {
+        GeomFactory factory;
+
+        PosXY pos1(7.625752, 53.942254);
+        PosXY pos2(7.615752, 53.932254);
+        PosXY pos3(7.532752, 53.915354);
+
+        vector<PosXY> locations({pos1, pos2, pos3});
+
+        bytes_t twkb = factory.makeLine(locations, 6, true);
+
+        // SELECT ST_AsTWKB('LINESTRING(7.625752 53.942254, 7.615752 53.932254, 7.532752 53.915354)'::geometry, 6) as binary;
+        bytes_t targetTwkb = bytes_t(
+                {0xC2, 0x01, 0xA0, 0xC3, 0x97, 0x07, 0x90, 0xAD, 0x0B, 0xB4, 0xBB, 0xB5, 0x33, 0xA8, 0xA4, 0x03, 0x03, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0x9F, 0x9C,
+                 0x01, 0x9F, 0x9C, 0x01, 0xEF, 0x90, 0x0A, 0x87, 0x88, 0x02});
+
+        CHECK(twkb == targetTwkb);
 
     }
 
@@ -130,10 +138,7 @@ TEST_CASE("Creating line geometries") {
                 {0xC2, 0x08, 0x0D, 0x03, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0xFE, 0x9E, 0x01, 0x9F, 0x9C, 0x01, 0x9F, 0x9C, 0x01, 0x70, 0xEF, 0x90, 0x0A, 0x87, 0x88,
                  0x02, 0xD0, 0x01});
 
-        for (size_t i = 0; i < targetTwkb.size(); i++) {
-            cout << hex << twkb[i] << " <-> " << targetTwkb[i] << endl;
-            CHECK(twkb[i] == targetTwkb[i]);
-        }
+        CHECK(twkb == targetTwkb);
 
     }
 
@@ -153,10 +158,7 @@ TEST_CASE("Creating line geometries") {
                 {0xC2, 0x08, 0x0F, 0x03, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0xFE, 0x9E, 0x01, 0xC8, 0x02, 0x9F, 0x9C, 0x01, 0x9F, 0x9C, 0x01, 0x70, 0x02, 0xEF, 0x90,
                  0x0A, 0x87, 0x88, 0x02, 0xD0, 0x01, 0x02});
 
-        for (size_t i = 0; i < targetTwkb.size(); i++) {
-            cout << hex << twkb[i] << " <-> " << targetTwkb[i] << endl;
-            CHECK(twkb[i] == targetTwkb[i]);
-        }
+        CHECK(twkb == targetTwkb);
 
     }
 

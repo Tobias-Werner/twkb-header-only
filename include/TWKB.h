@@ -203,7 +203,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeLine(vector<PosXY> locations, char precisionXY) {
+        bytes_t makeLine(vector<PosXY> locations, char precisionXY, bool bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -211,7 +211,36 @@ namespace TWKB {
 
             // Prepare metadata header
             // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, false, false, false, false, false);
+            setMetadataBits(twkb, bbox, false, false, false, false);
+
+            if (bbox) {
+
+                int minx = shrink(locations.front().x, precisionXY);
+                int maxx = minx;
+                int miny = shrink(locations.front().y, precisionXY);
+                int maxy = miny;
+
+                for (auto &location : locations) {
+                    int tmpX = shrink(location.x, precisionXY);
+                    int tmpY = shrink(location.y, precisionXY);
+
+                    if (tmpX < minx) minx = tmpX;
+                    if (tmpY < miny) miny = tmpY;
+                    if (tmpX > maxx) maxx = tmpX;
+                    if (tmpY > maxy) maxy = tmpY;
+                }
+
+                bytes_t bboxX = encodeVarint(encodeZigZag(minx));
+                bytes_t bboxY = encodeVarint(encodeZigZag(miny));
+                bytes_t deltaX = encodeVarint(encodeZigZag(maxx - minx));
+                bytes_t deltaY = encodeVarint(encodeZigZag(maxy - miny));
+
+                twkb.insert(twkb.end(), bboxX.begin(), bboxX.end());
+                twkb.insert(twkb.end(), deltaX.begin(), deltaX.end());
+                twkb.insert(twkb.end(), bboxY.begin(), bboxY.end());
+                twkb.insert(twkb.end(), deltaY.begin(), deltaY.end());
+
+            }
 
             // Set number of containing points
             bytes_t npoints = encodeVarint(locations.size());
