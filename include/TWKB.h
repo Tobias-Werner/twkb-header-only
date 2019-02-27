@@ -450,7 +450,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makePolygon(vector<vector<PosXY>> rings, char precisionXY) {
+        bytes_t makePolygon(vector<vector<PosXY>> rings, char precisionXY, bool bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -458,7 +458,41 @@ namespace TWKB {
 
             // Prepare metadata header
             // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, false, false, false, false, false);
+            setMetadataBits(twkb, bbox, false, false, false, false);
+
+
+            if (bbox) {
+
+                int minx = shrink(rings.front().front().x, precisionXY);
+                int maxx = minx;
+                int miny = shrink(rings.front().front().y, precisionXY);
+                int maxy = miny;
+
+                for (auto &ring : rings) {
+
+                    for (auto &location : ring) {
+                        int tmpX = shrink(location.x, precisionXY);
+                        int tmpY = shrink(location.y, precisionXY);
+
+                        if (tmpX < minx) minx = tmpX;
+                        if (tmpY < miny) miny = tmpY;
+                        if (tmpX > maxx) maxx = tmpX;
+                        if (tmpY > maxy) maxy = tmpY;
+                    }
+
+                }
+
+                bytes_t bboxX = encodeVarint(encodeZigZag(minx));
+                bytes_t bboxY = encodeVarint(encodeZigZag(miny));
+                bytes_t deltaX = encodeVarint(encodeZigZag(maxx - minx));
+                bytes_t deltaY = encodeVarint(encodeZigZag(maxy - miny));
+
+                append(twkb, bboxX, deltaX, bboxY, deltaY);
+
+            }
+
+
+
 
             // Insert number of containing rings
             bytes_t nrings = encodeVarint(rings.size());
@@ -494,6 +528,213 @@ namespace TWKB {
                     bytes_t deltaYAsZigZag = encodeVarint(encodeZigZag(deltaY));
 
                     append(twkb, deltaXAsZigZag, deltaYAsZigZag);
+
+                }
+            }
+
+
+            return twkb;
+        }
+
+        bytes_t makePolygon(vector<vector<PosXYZ>> rings, char precisionXY, char precisionZ, bool bbox) {
+            bytes_t twkb({0x00, 0x00});
+
+            // Set type and precision
+            setTypeAndPrecision(twkb, 0x03, precisionXY);
+
+            // Prepare metadata header
+            // bbox | size | idlist | extended dimensions | empty geom
+            setMetadataBits(twkb, bbox, false, false, true, false);
+
+            addZDimensions(twkb, precisionZ);
+
+            if (bbox) {
+
+                int minx = shrink(rings.front().front().x, precisionXY);
+                int maxx = minx;
+                int miny = shrink(rings.front().front().y, precisionXY);
+                int maxy = miny;
+                int minz = shrink(rings.front().front().z, precisionZ);
+                int maxz = minz;
+
+                for (auto &ring : rings) {
+
+                    for (auto &location : ring) {
+                        int tmpX = shrink(location.x, precisionXY);
+                        int tmpY = shrink(location.y, precisionXY);
+                        int tmpZ = shrink(location.z, precisionZ);
+
+                        if (tmpX < minx) minx = tmpX;
+                        if (tmpY < miny) miny = tmpY;
+                        if (tmpZ < minz) minz = tmpZ;
+                        if (tmpX > maxx) maxx = tmpX;
+                        if (tmpY > maxy) maxy = tmpY;
+                        if (tmpZ > maxz) maxz = tmpZ;
+                    }
+
+                }
+
+                bytes_t bboxX = encodeVarint(encodeZigZag(minx));
+                bytes_t bboxY = encodeVarint(encodeZigZag(miny));
+                bytes_t bboxZ = encodeVarint(encodeZigZag(minz));
+                bytes_t deltaX = encodeVarint(encodeZigZag(maxx - minx));
+                bytes_t deltaY = encodeVarint(encodeZigZag(maxy - miny));
+                bytes_t deltaZ = encodeVarint(encodeZigZag(maxz - minz));
+
+                append(twkb, bboxX, deltaX, bboxY, deltaY, bboxZ, deltaZ);
+
+            }
+
+            // Insert number of containing rings
+            bytes_t nrings = encodeVarint(rings.size());
+            append(twkb, nrings);
+
+            int lastXFull = shrink(rings.front().front().x, precisionXY);
+            int lastYFull = shrink(rings.front().front().y, precisionXY);
+            int lastZFull = shrink(rings.front().front().z, precisionZ);
+
+            int deltaX = lastXFull;
+            int deltaY = lastYFull;
+            int deltaZ = lastZFull;
+
+            for (size_t i = 0; i < rings.size(); i++) {
+                auto &pointsInRing = rings[i];
+
+                // Set number of containing pointsInRing
+                bytes_t npoints = encodeVarint(pointsInRing.size());
+                append(twkb, npoints);
+
+                for (int j = 0; j < pointsInRing.size(); j++) {
+
+                    int currentXFull = shrink(pointsInRing[j].x, precisionXY);
+                    int currentYFull = shrink(pointsInRing[j].y, precisionXY);
+                    int currentZFull = shrink(pointsInRing[j].z, precisionZ);
+
+                    if (!(i == 0 && j == 0)) {
+                        deltaX = currentXFull - lastXFull;
+                        deltaY = currentYFull - lastYFull;
+                        deltaZ = currentZFull - lastZFull;
+                    }
+
+                    lastXFull = currentXFull;
+                    lastYFull = currentYFull;
+                    lastZFull = currentZFull;
+
+                    bytes_t deltaXAsZigZag = encodeVarint(encodeZigZag(deltaX));
+                    bytes_t deltaYAsZigZag = encodeVarint(encodeZigZag(deltaY));
+                    bytes_t deltaZAsZigZag = encodeVarint(encodeZigZag(deltaZ));
+
+                    append(twkb, deltaXAsZigZag, deltaYAsZigZag, deltaZAsZigZag);
+
+                }
+            }
+
+
+            return twkb;
+        }
+
+        bytes_t makePolygon(vector<vector<PosXYZT>> rings, char precisionXY, char precisionZ, char precisionT, bool bbox) {
+            bytes_t twkb({0x00, 0x00});
+
+            // Set type and precision
+            setTypeAndPrecision(twkb, 0x03, precisionXY);
+
+            // Prepare metadata header
+            // bbox | size | idlist | extended dimensions | empty geom
+            setMetadataBits(twkb, bbox, false, false, true, false);
+
+            addZTDimensions(twkb, precisionZ, precisionT);
+
+            if (bbox) {
+
+                int minx = shrink(rings.front().front().x, precisionXY);
+                int maxx = minx;
+                int miny = shrink(rings.front().front().y, precisionXY);
+                int maxy = miny;
+                int minz = shrink(rings.front().front().z, precisionZ);
+                int maxz = minz;
+                int mint = shrink(rings.front().front().t, precisionT);
+                int maxt = mint;
+
+                for (auto &ring : rings) {
+
+                    for (auto &location : ring) {
+                        int tmpX = shrink(location.x, precisionXY);
+                        int tmpY = shrink(location.y, precisionXY);
+                        int tmpZ = shrink(location.z, precisionZ);
+                        int tmpT = shrink(location.t, precisionT);
+
+                        if (tmpX < minx) minx = tmpX;
+                        if (tmpY < miny) miny = tmpY;
+                        if (tmpZ < minz) minz = tmpZ;
+                        if (tmpT < mint) mint = tmpT;
+                        if (tmpX > maxx) maxx = tmpX;
+                        if (tmpY > maxy) maxy = tmpY;
+                        if (tmpZ > maxz) maxz = tmpZ;
+                        if (tmpT > maxt) maxt = tmpT;
+                    }
+
+                }
+
+                bytes_t bboxX = encodeVarint(encodeZigZag(minx));
+                bytes_t bboxY = encodeVarint(encodeZigZag(miny));
+                bytes_t bboxZ = encodeVarint(encodeZigZag(minz));
+                bytes_t bboxT = encodeVarint(encodeZigZag(mint));
+                bytes_t deltaX = encodeVarint(encodeZigZag(maxx - minx));
+                bytes_t deltaY = encodeVarint(encodeZigZag(maxy - miny));
+                bytes_t deltaZ = encodeVarint(encodeZigZag(maxz - minz));
+                bytes_t deltaT = encodeVarint(encodeZigZag(maxt - mint));
+
+                append(twkb, bboxX, deltaX, bboxY, deltaY, bboxZ, deltaZ, bboxT, deltaT);
+
+            }
+
+            // Insert number of containing rings
+            bytes_t nrings = encodeVarint(rings.size());
+            append(twkb, nrings);
+
+            int lastXFull = shrink(rings.front().front().x, precisionXY);
+            int lastYFull = shrink(rings.front().front().y, precisionXY);
+            int lastZFull = shrink(rings.front().front().z, precisionZ);
+            int lastTFull = shrink(rings.front().front().t, precisionT);
+
+            int deltaX = lastXFull;
+            int deltaY = lastYFull;
+            int deltaZ = lastZFull;
+            int deltaT = lastTFull;
+
+            for (size_t i = 0; i < rings.size(); i++) {
+                auto &pointsInRing = rings[i];
+
+                // Set number of containing pointsInRing
+                bytes_t npoints = encodeVarint(pointsInRing.size());
+                append(twkb, npoints);
+
+                for (int j = 0; j < pointsInRing.size(); j++) {
+
+                    int currentXFull = shrink(pointsInRing[j].x, precisionXY);
+                    int currentYFull = shrink(pointsInRing[j].y, precisionXY);
+                    int currentZFull = shrink(pointsInRing[j].z, precisionZ);
+                    int currentTFull = shrink(pointsInRing[j].t, precisionT);
+
+                    if (!(i == 0 && j == 0)) {
+                        deltaX = currentXFull - lastXFull;
+                        deltaY = currentYFull - lastYFull;
+                        deltaZ = currentZFull - lastZFull;
+                        deltaT = currentTFull - lastTFull;
+                    }
+
+                    lastXFull = currentXFull;
+                    lastYFull = currentYFull;
+                    lastZFull = currentZFull;
+                    lastTFull = currentTFull;
+
+                    bytes_t deltaXAsZigZag = encodeVarint(encodeZigZag(deltaX));
+                    bytes_t deltaYAsZigZag = encodeVarint(encodeZigZag(deltaY));
+                    bytes_t deltaZAsZigZag = encodeVarint(encodeZigZag(deltaZ));
+                    bytes_t deltaTAsZigZag = encodeVarint(encodeZigZag(deltaT));
+
+                    append(twkb, deltaXAsZigZag, deltaYAsZigZag, deltaZAsZigZag, deltaTAsZigZag);
 
                 }
             }
