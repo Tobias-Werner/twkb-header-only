@@ -72,6 +72,14 @@ namespace TWKB {
             return encodeVarint(encodeZigZag(shrink(value, precision)));
         }
 
+        void append(bytes_t &twkb) {}
+
+        template<typename T, typename... Types>
+        void append(bytes_t &twkb, T var1, Types... var2) {
+            twkb.insert(twkb.end(), var1.begin(), var1.end());
+            append(twkb, var2...);
+        }
+
     public:
 
         static int pow10(unsigned char base) {
@@ -147,8 +155,7 @@ namespace TWKB {
             auto x = encode(location.x, precisionXY);
             auto y = encode(location.y, precisionXY);
 
-            twkb.insert(twkb.end(), x.begin(), x.end());
-            twkb.insert(twkb.end(), y.begin(), y.end());
+            append(twkb, x, y);
 
             return twkb;
         }
@@ -170,9 +177,7 @@ namespace TWKB {
             auto y = encode(location.y, precisionXY);
             auto z = encode(location.z, precisionZ);
 
-            twkb.insert(twkb.end(), x.begin(), x.end());
-            twkb.insert(twkb.end(), y.begin(), y.end());
-            twkb.insert(twkb.end(), z.begin(), z.end());
+            append(twkb, x, y, z);
 
             return twkb;
         }
@@ -195,10 +200,7 @@ namespace TWKB {
             auto z = encode(location.z, precisionZ);
             auto t = encode(location.t, precisionT);
 
-            twkb.insert(twkb.end(), x.begin(), x.end());
-            twkb.insert(twkb.end(), y.begin(), y.end());
-            twkb.insert(twkb.end(), z.begin(), z.end());
-            twkb.insert(twkb.end(), t.begin(), t.end());
+            append(twkb, x, y, z, t);
 
             return twkb;
         }
@@ -235,16 +237,14 @@ namespace TWKB {
                 bytes_t deltaX = encodeVarint(encodeZigZag(maxx - minx));
                 bytes_t deltaY = encodeVarint(encodeZigZag(maxy - miny));
 
-                twkb.insert(twkb.end(), bboxX.begin(), bboxX.end());
-                twkb.insert(twkb.end(), deltaX.begin(), deltaX.end());
-                twkb.insert(twkb.end(), bboxY.begin(), bboxY.end());
-                twkb.insert(twkb.end(), deltaY.begin(), deltaY.end());
+                append(twkb, bboxX, deltaX, bboxY, deltaY);
 
             }
 
             // Set number of containing points
             bytes_t npoints = encodeVarint(locations.size());
-            twkb.insert(twkb.end(), npoints.begin(), npoints.end());
+
+            append(twkb, npoints);
 
             int xShrinked = shrink(locations.front().x, precisionXY);
             int yShrinked = shrink(locations.front().y, precisionXY);
@@ -252,8 +252,7 @@ namespace TWKB {
             bytes_t x = encodeVarint(encodeZigZag(xShrinked));
             bytes_t y = encodeVarint(encodeZigZag(yShrinked));
 
-            twkb.insert(twkb.end(), x.begin(), x.end());
-            twkb.insert(twkb.end(), y.begin(), y.end());
+            append(twkb, x, y);
 
             for (int i = 1; i < locations.size(); i++) {
 
@@ -263,8 +262,7 @@ namespace TWKB {
                 x = encodeVarint(encodeZigZag(deltaX));
                 y = encodeVarint(encodeZigZag(deltaY));
 
-                twkb.insert(twkb.end(), x.begin(), x.end());
-                twkb.insert(twkb.end(), y.begin(), y.end());
+                append(twkb, x, y);
 
                 xShrinked = shrink(locations[i].x, precisionXY);
                 yShrinked = shrink(locations[i].y, precisionXY);
@@ -274,7 +272,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeLine(vector<PosXYZ> locations, char precisionXY, char precisionZ) {
+        bytes_t makeLine(vector<PosXYZ> locations, char precisionXY, char precisionZ, bool bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -282,9 +280,45 @@ namespace TWKB {
 
             // Prepare metadata header
             // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, false, false, false, true, false);
+            setMetadataBits(twkb, bbox, false, false, true, false);
 
+            // Add extendet dimension information
             addZDimensions(twkb, precisionZ);
+
+            // Add bounding box - if selected
+            if (bbox) {
+
+                int minx = shrink(locations.front().x, precisionXY);
+                int maxx = minx;
+                int miny = shrink(locations.front().y, precisionXY);
+                int maxy = miny;
+                int minz = shrink(locations.front().z, precisionZ);
+                int maxz = minz;
+
+                for (auto &location : locations) {
+                    int tmpX = shrink(location.x, precisionXY);
+                    int tmpY = shrink(location.y, precisionXY);
+                    int tmpZ = shrink(location.z, precisionZ);
+
+                    if (tmpX < minx) minx = tmpX;
+                    if (tmpY < miny) miny = tmpY;
+                    if (tmpZ < minz) minz = tmpZ;
+                    if (tmpX > maxx) maxx = tmpX;
+                    if (tmpY > maxy) maxy = tmpY;
+                    if (tmpZ > maxz) maxz = tmpZ;
+                }
+
+                bytes_t bboxX = encodeVarint(encodeZigZag(minx));
+                bytes_t bboxY = encodeVarint(encodeZigZag(miny));
+                bytes_t bboxZ = encodeVarint(encodeZigZag(minz));
+                bytes_t deltaX = encodeVarint(encodeZigZag(maxx - minx));
+                bytes_t deltaY = encodeVarint(encodeZigZag(maxy - miny));
+                bytes_t deltaZ = encodeVarint(encodeZigZag(maxz - minz));
+
+                append(twkb, bboxX, deltaX, bboxY, deltaY, bboxZ, deltaZ);
+
+            }
+
 
             // Set number of containing points
             bytes_t npoints = encodeVarint(locations.size());
@@ -298,9 +332,7 @@ namespace TWKB {
             bytes_t y = encodeVarint(encodeZigZag(yShrinked));
             bytes_t z = encodeVarint(encodeZigZag(zShrinked));
 
-            twkb.insert(twkb.end(), x.begin(), x.end());
-            twkb.insert(twkb.end(), y.begin(), y.end());
-            twkb.insert(twkb.end(), z.begin(), z.end());
+            append(twkb, x, y, z);
 
             for (int i = 1; i < locations.size(); i++) {
 
@@ -312,9 +344,7 @@ namespace TWKB {
                 y = encodeVarint(encodeZigZag(deltaY));
                 z = encodeVarint(encodeZigZag(deltaZ));
 
-                twkb.insert(twkb.end(), x.begin(), x.end());
-                twkb.insert(twkb.end(), y.begin(), y.end());
-                twkb.insert(twkb.end(), z.begin(), z.end());
+                append(twkb, x, y, z);
 
                 xShrinked = shrink(locations[i].x, precisionXY);
                 yShrinked = shrink(locations[i].y, precisionXY);
@@ -325,7 +355,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeLine(vector<PosXYZT> locations, char precisionXY, char precisionZ, char precisionT) {
+        bytes_t makeLine(vector<PosXYZT> locations, char precisionXY, char precisionZ, char precisionT, bool bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -333,9 +363,52 @@ namespace TWKB {
 
             // Prepare metadata header
             // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, false, false, false, true, false);
+            setMetadataBits(twkb, bbox, false, false, true, false);
 
+            // Add extendet dimension information
             addZTDimensions(twkb, precisionZ, precisionT);
+
+            // Add bounding box - if selected
+            if (bbox) {
+
+                int minx = shrink(locations.front().x, precisionXY);
+                int maxx = minx;
+                int miny = shrink(locations.front().y, precisionXY);
+                int maxy = miny;
+                int minz = shrink(locations.front().z, precisionZ);
+                int maxz = minz;
+                int mint = shrink(locations.front().t, precisionT);
+                int maxt = mint;
+
+                for (auto &location : locations) {
+                    int tmpX = shrink(location.x, precisionXY);
+                    int tmpY = shrink(location.y, precisionXY);
+                    int tmpZ = shrink(location.z, precisionZ);
+                    int tmpT = shrink(location.t, precisionT);
+
+                    if (tmpX < minx) minx = tmpX;
+                    if (tmpY < miny) miny = tmpY;
+                    if (tmpZ < minz) minz = tmpZ;
+                    if (tmpT < mint) mint = tmpT;
+                    if (tmpX > maxx) maxx = tmpX;
+                    if (tmpY > maxy) maxy = tmpY;
+                    if (tmpZ > maxz) maxz = tmpZ;
+                    if (tmpT > maxt) maxt = tmpT;
+                }
+
+                bytes_t bboxX = encodeVarint(encodeZigZag(minx));
+                bytes_t bboxY = encodeVarint(encodeZigZag(miny));
+                bytes_t bboxZ = encodeVarint(encodeZigZag(minz));
+                bytes_t bboxT = encodeVarint(encodeZigZag(mint));
+                bytes_t deltaX = encodeVarint(encodeZigZag(maxx - minx));
+                bytes_t deltaY = encodeVarint(encodeZigZag(maxy - miny));
+                bytes_t deltaZ = encodeVarint(encodeZigZag(maxz - minz));
+                bytes_t deltaT = encodeVarint(encodeZigZag(maxt - mint));
+
+                append(twkb, bboxX, deltaX, bboxY, deltaY, bboxZ, deltaZ, bboxT, deltaT);
+
+            }
+
 
             // Set number of containing points
             bytes_t npoints = encodeVarint(locations.size());
@@ -351,10 +424,7 @@ namespace TWKB {
             bytes_t z = encodeVarint(encodeZigZag(zShrinked));
             bytes_t t = encodeVarint(encodeZigZag(tShrinked));
 
-            twkb.insert(twkb.end(), x.begin(), x.end());
-            twkb.insert(twkb.end(), y.begin(), y.end());
-            twkb.insert(twkb.end(), z.begin(), z.end());
-            twkb.insert(twkb.end(), t.begin(), t.end());
+            append(twkb, x, y, z, t);
 
             for (int i = 1; i < locations.size(); i++) {
 
@@ -368,10 +438,7 @@ namespace TWKB {
                 z = encodeVarint(encodeZigZag(deltaZ));
                 t = encodeVarint(encodeZigZag(deltaT));
 
-                twkb.insert(twkb.end(), x.begin(), x.end());
-                twkb.insert(twkb.end(), y.begin(), y.end());
-                twkb.insert(twkb.end(), z.begin(), z.end());
-                twkb.insert(twkb.end(), t.begin(), t.end());
+                append(twkb, x, y, z, t);
 
                 xShrinked = shrink(locations[i].x, precisionXY);
                 yShrinked = shrink(locations[i].y, precisionXY);
@@ -383,7 +450,57 @@ namespace TWKB {
             return twkb;
         }
 
+        bytes_t makePolygon(vector<vector<PosXY>> rings, char precisionXY) {
+            bytes_t twkb({0x00, 0x00});
 
+            // Set type and precision
+            setTypeAndPrecision(twkb, 0x03, precisionXY);
+
+            // Prepare metadata header
+            // bbox | size | idlist | extended dimensions | empty geom
+            setMetadataBits(twkb, false, false, false, false, false);
+
+            // Insert number of containing rings
+            bytes_t nrings = encodeVarint(rings.size());
+            append(twkb, nrings);
+
+            int lastXFull = shrink(rings.front().front().x, precisionXY);
+            int lastYFull = shrink(rings.front().front().y, precisionXY);
+
+            int deltaX = lastXFull;
+            int deltaY = lastYFull;
+
+            for (size_t i = 0; i < rings.size(); i++) {
+                auto &pointsInRing = rings[i];
+
+                // Set number of containing pointsInRing
+                bytes_t npoints = encodeVarint(pointsInRing.size());
+                append(twkb, npoints);
+
+                for (int j = 0; j < pointsInRing.size(); j++) {
+
+                    int currentXFull = shrink(pointsInRing[j].x, precisionXY);
+                    int currentYFull = shrink(pointsInRing[j].y, precisionXY);
+
+                    if (!(i == 0 && j == 0)) {
+                        deltaX = currentXFull - lastXFull;
+                        deltaY = currentYFull - lastYFull;
+                    }
+
+                    lastXFull = currentXFull;
+                    lastYFull = currentYFull;
+
+                    bytes_t deltaXAsZigZag = encodeVarint(encodeZigZag(deltaX));
+                    bytes_t deltaYAsZigZag = encodeVarint(encodeZigZag(deltaY));
+
+                    append(twkb, deltaXAsZigZag, deltaYAsZigZag);
+
+                }
+            }
+
+
+            return twkb;
+        }
     };
 
 };
