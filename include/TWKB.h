@@ -742,6 +742,258 @@ namespace TWKB {
 
             return twkb;
         }
+
+        bytes_t makeMultiPoint(vector<PosXY> locations, char precisionXY, bool bbox) {
+
+            bytes_t twkb({0x00, 0x00});
+
+            // Set type and precision
+            setTypeAndPrecision(twkb, 0x04, precisionXY);
+
+            // Prepare metadata header
+            // bbox | size | idlist | extended dimensions | empty geom
+            setMetadataBits(twkb, bbox, false, false, false, false);
+
+            if (bbox) {
+
+                int minx = shrink(locations.front().x, precisionXY);
+                int maxx = minx;
+                int miny = shrink(locations.front().y, precisionXY);
+                int maxy = miny;
+
+                for (auto &location : locations) {
+
+                    int tmpX = shrink(location.x, precisionXY);
+                    int tmpY = shrink(location.y, precisionXY);
+
+                    if (tmpX < minx) minx = tmpX;
+                    if (tmpY < miny) miny = tmpY;
+                    if (tmpX > maxx) maxx = tmpX;
+                    if (tmpY > maxy) maxy = tmpY;
+
+                }
+
+                bytes_t bboxX = encodeVarint(encodeZigZag(minx));
+                bytes_t bboxY = encodeVarint(encodeZigZag(miny));
+
+                bytes_t deltaX = encodeVarint(encodeZigZag(maxx - minx));
+                bytes_t deltaY = encodeVarint(encodeZigZag(maxy - miny));
+
+                append(twkb, bboxX, deltaX, bboxY, deltaY);
+
+            }
+
+            // Set number of containing points
+            bytes_t npoints = encodeVarint(locations.size());
+            append(twkb, npoints);
+
+            int xShrinked = shrink(locations.front().x, precisionXY);
+            int yShrinked = shrink(locations.front().y, precisionXY);
+
+            bytes_t x = encodeVarint(encodeZigZag(xShrinked));
+            bytes_t y = encodeVarint(encodeZigZag(yShrinked));
+
+            append(twkb, x, y);
+
+            for (int i = 1; i < locations.size(); i++) {
+
+                int deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
+                int deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
+
+                x = encodeVarint(encodeZigZag(deltaX));
+                y = encodeVarint(encodeZigZag(deltaY));
+
+                append(twkb, x, y);
+
+                xShrinked = shrink(locations[i].x, precisionXY);
+                yShrinked = shrink(locations[i].y, precisionXY);
+
+            }
+
+
+            return twkb;
+        }
+
+        bytes_t makeMultiPoint(vector<PosXYZ> locations, char precisionXY, char precisionZ, bool bbox) {
+
+            bytes_t twkb({0x00, 0x00});
+
+            // Set type and precision
+            setTypeAndPrecision(twkb, 0x04, precisionXY);
+
+            // Prepare metadata header
+            // bbox | size | idlist | extended dimensions | empty geom
+            setMetadataBits(twkb, bbox, false, false, true, false);
+
+            addZDimensions(twkb, precisionZ);
+
+            if (bbox) {
+
+                int minx = shrink(locations.front().x, precisionXY);
+                int maxx = minx;
+                int miny = shrink(locations.front().y, precisionXY);
+                int maxy = miny;
+                int minz = shrink(locations.front().z, precisionZ);
+                int maxz = minz;
+
+                for (auto &location : locations) {
+
+                    int tmpX = shrink(location.x, precisionXY);
+                    int tmpY = shrink(location.y, precisionXY);
+                    int tmpZ = shrink(location.z, precisionZ);
+
+                    if (tmpX < minx) minx = tmpX;
+                    if (tmpY < miny) miny = tmpY;
+                    if (tmpZ < minz) minz = tmpZ;
+                    if (tmpX > maxx) maxx = tmpX;
+                    if (tmpY > maxy) maxy = tmpY;
+                    if (tmpZ > maxz) maxz = tmpZ;
+
+                }
+
+                bytes_t bboxX = encodeVarint(encodeZigZag(minx));
+                bytes_t bboxY = encodeVarint(encodeZigZag(miny));
+                bytes_t bboxZ = encodeVarint(encodeZigZag(minz));
+
+                bytes_t deltaX = encodeVarint(encodeZigZag(maxx - minx));
+                bytes_t deltaY = encodeVarint(encodeZigZag(maxy - miny));
+                bytes_t deltaZ = encodeVarint(encodeZigZag(maxz - minz));
+
+                append(twkb, bboxX, deltaX, bboxY, deltaY, bboxZ, deltaZ);
+
+            }
+
+            // Set number of containing points
+            bytes_t npoints = encodeVarint(locations.size());
+            append(twkb, npoints);
+
+            int xShrinked = shrink(locations.front().x, precisionXY);
+            int yShrinked = shrink(locations.front().y, precisionXY);
+            int zShrinked = shrink(locations.front().z, precisionZ);
+
+            bytes_t x = encodeVarint(encodeZigZag(xShrinked));
+            bytes_t y = encodeVarint(encodeZigZag(yShrinked));
+            bytes_t z = encodeVarint(encodeZigZag(zShrinked));
+
+            append(twkb, x, y, z);
+
+            for (int i = 1; i < locations.size(); i++) {
+
+                int deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
+                int deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
+                int deltaZ = shrink(locations[i].z, precisionZ) - zShrinked;
+
+                x = encodeVarint(encodeZigZag(deltaX));
+                y = encodeVarint(encodeZigZag(deltaY));
+                z = encodeVarint(encodeZigZag(deltaZ));
+
+                append(twkb, x, y, z);
+
+                xShrinked = shrink(locations[i].x, precisionXY);
+                yShrinked = shrink(locations[i].y, precisionXY);
+                zShrinked = shrink(locations[i].z, precisionZ);
+
+            }
+
+
+            return twkb;
+        }
+
+        bytes_t makeMultiPoint(vector<PosXYZT> locations, char precisionXY, char precisionZ, char precisionT, bool bbox) {
+
+            bytes_t twkb({0x00, 0x00});
+
+            // Set type and precision
+            setTypeAndPrecision(twkb, 0x04, precisionXY);
+
+            // Prepare metadata header
+            // bbox | size | idlist | extended dimensions | empty geom
+            setMetadataBits(twkb, bbox, false, false, true, false);
+
+            addZTDimensions(twkb, precisionZ, precisionT);
+
+            if (bbox) {
+
+                int minx = shrink(locations.front().x, precisionXY);
+                int maxx = minx;
+                int miny = shrink(locations.front().y, precisionXY);
+                int maxy = miny;
+                int minz = shrink(locations.front().z, precisionZ);
+                int maxz = minz;
+                int mint = shrink(locations.front().t, precisionT);
+                int maxt = mint;
+
+                for (auto &location : locations) {
+
+                    int tmpX = shrink(location.x, precisionXY);
+                    int tmpY = shrink(location.y, precisionXY);
+                    int tmpZ = shrink(location.z, precisionZ);
+                    int tmpT = shrink(location.t, precisionT);
+
+                    if (tmpX < minx) minx = tmpX;
+                    if (tmpY < miny) miny = tmpY;
+                    if (tmpZ < minz) minz = tmpZ;
+                    if (tmpT < mint) mint = tmpT;
+                    if (tmpX > maxx) maxx = tmpX;
+                    if (tmpY > maxy) maxy = tmpY;
+                    if (tmpZ > maxz) maxz = tmpZ;
+                    if (tmpT > maxt) maxt = tmpT;
+                }
+
+                bytes_t bboxX = encodeVarint(encodeZigZag(minx));
+                bytes_t bboxY = encodeVarint(encodeZigZag(miny));
+                bytes_t bboxZ = encodeVarint(encodeZigZag(minz));
+                bytes_t bboxT = encodeVarint(encodeZigZag(mint));
+
+                bytes_t deltaX = encodeVarint(encodeZigZag(maxx - minx));
+                bytes_t deltaY = encodeVarint(encodeZigZag(maxy - miny));
+                bytes_t deltaZ = encodeVarint(encodeZigZag(maxz - minz));
+                bytes_t deltaT = encodeVarint(encodeZigZag(maxt - mint));
+
+                append(twkb, bboxX, deltaX, bboxY, deltaY, bboxZ, deltaZ, bboxT, deltaT);
+
+            }
+
+            // Set number of containing points
+            bytes_t npoints = encodeVarint(locations.size());
+            append(twkb, npoints);
+
+            int xShrinked = shrink(locations.front().x, precisionXY);
+            int yShrinked = shrink(locations.front().y, precisionXY);
+            int zShrinked = shrink(locations.front().z, precisionZ);
+            int tShrinked = shrink(locations.front().t, precisionT);
+
+            bytes_t x = encodeVarint(encodeZigZag(xShrinked));
+            bytes_t y = encodeVarint(encodeZigZag(yShrinked));
+            bytes_t z = encodeVarint(encodeZigZag(zShrinked));
+            bytes_t t = encodeVarint(encodeZigZag(tShrinked));
+
+            append(twkb, x, y, z, t);
+
+            for (int i = 1; i < locations.size(); i++) {
+
+                int deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
+                int deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
+                int deltaZ = shrink(locations[i].z, precisionZ) - zShrinked;
+                int deltaT = shrink(locations[i].t, precisionT) - tShrinked;
+
+                x = encodeVarint(encodeZigZag(deltaX));
+                y = encodeVarint(encodeZigZag(deltaY));
+                z = encodeVarint(encodeZigZag(deltaZ));
+                t = encodeVarint(encodeZigZag(deltaT));
+
+                append(twkb, x, y, z, t);
+
+                xShrinked = shrink(locations[i].x, precisionXY);
+                yShrinked = shrink(locations[i].y, precisionXY);
+                zShrinked = shrink(locations[i].z, precisionZ);
+                tShrinked = shrink(locations[i].t, precisionT);
+
+            }
+
+
+            return twkb;
+        }
     };
 
 };
