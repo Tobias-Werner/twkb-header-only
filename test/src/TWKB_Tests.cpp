@@ -518,4 +518,186 @@ TEST_CASE("Creating multipoint geometries") {
         CHECK(twkb == targetTwkb);
 
     }
+
+
+}
+
+TEST_CASE("Creating multiline geometries") {
+
+    SECTION("Creating multiline XYZT") {
+        GeomFactory factory;
+
+        PosXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
+        PosXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
+        PosXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
+
+        vector<PosXYZT> line1({pos1, pos2, pos3});
+
+        PosXYZT pos4(7.60679, 53.93277, 10.155, 171.0);
+        PosXYZT pos5(7.61170, 53.93686, 10.158, 172.0);
+        PosXYZT pos6(7.61577, 53.93547, 10.651, 173.0);
+
+        vector<PosXYZT> line2({pos4, pos5, pos6});
+
+        vector<vector<PosXYZT>> lines({line1, line2});
+
+        bytes_t twkb = factory.makeMultiLine(lines, 6, 3, 0, false);
+
+        // SELECT ST_AsTWKB('MULTILINESTRING((7.625752 53.942254 10.175 164.0, 7.615752 53.932254 10.231 165.0, 7.532752 53.915354 10.335 166.0), (7.60679 53.93277 10.155 171.0, 7.61170 53.93686 10.158 172.0, 7.61577 53.93547 10.651 173.0))'::geometry, 6, 3, 0, false, false) as binary;
+
+        bytes_t targetTwkb = bytes_t(
+                {0xC5, 0x08, 0x0F, 0x02, 0x03, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0xFE, 0x9E, 0x01, 0xC8, 0x02, 0x9F, 0x9C, 0x01, 0x9F, 0x9C, 0x01, 0x70, 0x02, 0xEF,
+                 0x90, 0x0A, 0x87, 0x88, 0x02, 0xD0, 0x01, 0x02, 0x03, 0xEC, 0x84, 0x09, 0x90, 0x90, 0x02, 0xE7, 0x02, 0x0A, 0xDC, 0x4C, 0xF4, 0x3F, 0x06, 0x02, 0xCC, 0x3F, 0xDB,
+                 0x15, 0xDA, 0x07, 0x02});
+
+        CHECK(twkb == targetTwkb);
+
+    }
+
+    SECTION("Creating multiline XYZT - with bbox") {
+        GeomFactory factory;
+
+        PosXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
+        PosXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
+        PosXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
+
+        vector<PosXYZT> line1({pos1, pos2, pos3});
+
+        PosXYZT pos4(7.60679, 53.93277, 10.155, 171.0);
+        PosXYZT pos5(7.61170, 53.93686, 10.158, 172.0);
+        PosXYZT pos6(7.61577, 53.93547, 10.651, 173.0);
+
+        vector<PosXYZT> line2({pos4, pos5, pos6});
+
+        vector<vector<PosXYZT>> lines({line1, line2});
+
+        bytes_t twkb = factory.makeMultiLine(lines, 6, 3, 0, true);
+
+        // SELECT ST_AsTWKB('MULTILINESTRING((7.625752 53.942254 10.175 164.0, 7.615752 53.932254 10.231 165.0, 7.532752 53.915354 10.335 166.0), (7.60679 53.93277 10.155 171.0, 7.61170 53.93686 10.158 172.0, 7.61577 53.93547 10.651 173.0))'::geometry, 6, 3, 0, false, true) as binary;
+
+        bytes_t targetTwkb = bytes_t(
+                {0xC5, 0x09, 0x0F, 0xA0, 0xC3, 0x97, 0x07, 0x90, 0xAD, 0x0B, 0xB4, 0xBB, 0xB5, 0x33, 0xA8, 0xA4, 0x03, 0xD6, 0x9E, 0x01, 0xE0, 0x07, 0xC8, 0x02, 0x12, 0x02, 0x03,
+                 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0xFE, 0x9E, 0x01, 0xC8, 0x02, 0x9F, 0x9C, 0x01, 0x9F, 0x9C, 0x01, 0x70, 0x02, 0xEF, 0x90, 0x0A, 0x87, 0x88, 0x02,
+                 0xD0, 0x01, 0x02, 0x03, 0xEC, 0x84, 0x09, 0x90, 0x90, 0x02, 0xE7, 0x02, 0x0A, 0xDC, 0x4C, 0xF4, 0x3F, 0x06, 0x02, 0xCC, 0x3F, 0xDB, 0x15, 0xDA, 0x07, 0x02});
+
+        CHECK(twkb == targetTwkb);
+
+    }
+
+    SECTION("Creating multiline XYZ") {
+        GeomFactory factory;
+
+        PosXYZ pos1(7.625752, 53.942254, 10.175);
+        PosXYZ pos2(7.615752, 53.932254, 10.231);
+        PosXYZ pos3(7.532752, 53.915354, 10.335);
+
+        vector<PosXYZ> line1({pos1, pos2, pos3});
+
+        PosXYZ pos4(7.60679, 53.93277, 10.155);
+        PosXYZ pos5(7.61170, 53.93686, 10.158);
+        PosXYZ pos6(7.61577, 53.93547, 10.651);
+
+        vector<PosXYZ> line2({pos4, pos5, pos6});
+
+        vector<vector<PosXYZ>> lines({line1, line2});
+
+        bytes_t twkb = factory.makeMultiLine(lines, 6, 3, false);
+
+        // SELECT ST_AsTWKB('MULTILINESTRING((7.625752 53.942254 10.175, 7.615752 53.932254 10.231, 7.532752 53.915354 10.335), (7.60679 53.93277 10.155, 7.61170 53.93686 10.158, 7.61577 53.93547 10.651))'::geometry, 6, 3, 0, false, false) as binary;
+
+        bytes_t targetTwkb = bytes_t(
+                {0xC5, 0x08, 0x0D, 0x02, 0x03, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0xFE, 0x9E, 0x01, 0x9F, 0x9C, 0x01, 0x9F, 0x9C, 0x01, 0x70, 0xEF, 0x90, 0x0A, 0x87,
+                 0x88, 0x02, 0xD0, 0x01, 0x03, 0xEC, 0x84, 0x09, 0x90, 0x90, 0x02, 0xE7, 0x02, 0xDC, 0x4C, 0xF4, 0x3F, 0x06, 0xCC, 0x3F, 0xDB, 0x15, 0xDA, 0x07});
+
+        CHECK(twkb == targetTwkb);
+
+    }
+
+    SECTION("Creating multiline XYZ - with bbox") {
+        GeomFactory factory;
+
+        PosXYZ pos1(7.625752, 53.942254, 10.175);
+        PosXYZ pos2(7.615752, 53.932254, 10.231);
+        PosXYZ pos3(7.532752, 53.915354, 10.335);
+
+        vector<PosXYZ> line1({pos1, pos2, pos3});
+
+        PosXYZ pos4(7.60679, 53.93277, 10.155);
+        PosXYZ pos5(7.61170, 53.93686, 10.158);
+        PosXYZ pos6(7.61577, 53.93547, 10.651);
+
+        vector<PosXYZ> line2({pos4, pos5, pos6});
+
+        vector<vector<PosXYZ>> lines({line1, line2});
+
+        bytes_t twkb = factory.makeMultiLine(lines, 6, 3, true);
+
+        // SELECT ST_AsTWKB('MULTILINESTRING((7.625752 53.942254 10.175, 7.615752 53.932254 10.231, 7.532752 53.915354 10.335), (7.60679 53.93277 10.155, 7.61170 53.93686 10.158, 7.61577 53.93547 10.651))'::geometry, 6, 3, 0, false, true) as binary;
+
+        bytes_t targetTwkb = bytes_t(
+                {0xC5, 0x09, 0x0D, 0xA0, 0xC3, 0x97, 0x07, 0x90, 0xAD, 0x0B, 0xB4, 0xBB, 0xB5, 0x33, 0xA8, 0xA4, 0x03, 0xD6, 0x9E, 0x01, 0xE0, 0x07, 0x02, 0x03, 0xB0, 0xF0, 0xA2,
+                 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0xFE, 0x9E, 0x01, 0x9F, 0x9C, 0x01, 0x9F, 0x9C, 0x01, 0x70, 0xEF, 0x90, 0x0A, 0x87, 0x88, 0x02, 0xD0, 0x01, 0x03, 0xEC, 0x84, 0x09,
+                 0x90, 0x90, 0x02, 0xE7, 0x02, 0xDC, 0x4C, 0xF4, 0x3F, 0x06, 0xCC, 0x3F, 0xDB, 0x15, 0xDA, 0x07});
+
+        CHECK(twkb == targetTwkb);
+
+    }
+
+    SECTION("Creating multiline XY") {
+        GeomFactory factory;
+
+        PosXY pos1(7.625752, 53.942254);
+        PosXY pos2(7.615752, 53.932254);
+        PosXY pos3(7.532752, 53.915354);
+
+        vector<PosXY> line1({pos1, pos2, pos3});
+
+        PosXY pos4(7.60679, 53.93277);
+        PosXY pos5(7.61170, 53.93686);
+        PosXY pos6(7.61577, 53.93547);
+
+        vector<PosXY> line2({pos4, pos5, pos6});
+
+        vector<vector<PosXY>> lines({line1, line2});
+
+        bytes_t twkb = factory.makeMultiLine(lines, 6, false);
+
+        // SELECT ST_AsTWKB('MULTILINESTRING((7.625752 53.942254, 7.615752 53.932254, 7.532752 53.915354), (7.60679 53.93277, 7.61170 53.93686, 7.61577 53.93547))'::geometry, 6, 3, 0, false, false) as binary;
+
+        bytes_t targetTwkb = bytes_t(
+                {0xC5, 0x00, 0x02, 0x03, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0x9F, 0x9C, 0x01, 0x9F, 0x9C, 0x01, 0xEF, 0x90, 0x0A, 0x87, 0x88, 0x02, 0x03, 0xEC, 0x84,
+                 0x09, 0x90, 0x90, 0x02, 0xDC, 0x4C, 0xF4, 0x3F, 0xCC, 0x3F, 0xDB, 0x15});
+
+        CHECK(twkb == targetTwkb);
+
+    }
+
+    SECTION("Creating multiline XY - with bbox") {
+        GeomFactory factory;
+
+        PosXY pos1(7.625752, 53.942254);
+        PosXY pos2(7.615752, 53.932254);
+        PosXY pos3(7.532752, 53.915354);
+
+        vector<PosXY> line1({pos1, pos2, pos3});
+
+        PosXY pos4(7.60679, 53.93277);
+        PosXY pos5(7.61170, 53.93686);
+        PosXY pos6(7.61577, 53.93547);
+
+        vector<PosXY> line2({pos4, pos5, pos6});
+
+        vector<vector<PosXY>> lines({line1, line2});
+
+        bytes_t twkb = factory.makeMultiLine(lines, 6, true);
+
+        // SELECT ST_AsTWKB('MULTILINESTRING((7.625752 53.942254, 7.615752 53.932254, 7.532752 53.915354), (7.60679 53.93277, 7.61170 53.93686, 7.61577 53.93547))'::geometry, 6, 3, 0, false, true) as binary;
+
+        bytes_t targetTwkb = bytes_t(
+                {0xC5, 0x01, 0xA0, 0xC3, 0x97, 0x07, 0x90, 0xAD, 0x0B, 0xB4, 0xBB, 0xB5, 0x33, 0xA8, 0xA4, 0x03, 0x02, 0x03, 0xB0, 0xF0, 0xA2, 0x07, 0xDC, 0xDF, 0xB8, 0x33, 0x9F,
+                 0x9C, 0x01, 0x9F, 0x9C, 0x01, 0xEF, 0x90, 0x0A, 0x87, 0x88, 0x02, 0x03, 0xEC, 0x84, 0x09, 0x90, 0x90, 0x02, 0xDC, 0x4C, 0xF4, 0x3F, 0xCC, 0x3F, 0xDB, 0x15});
+
+        CHECK(twkb == targetTwkb);
+
+    }
 }

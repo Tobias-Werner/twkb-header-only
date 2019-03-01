@@ -994,6 +994,276 @@ namespace TWKB {
 
             return twkb;
         }
+
+        bytes_t makeMultiLine(vector<vector<PosXYZT>> lines, char precisionXY, char precisionZ, char precisionT, bool bbox) {
+            bytes_t twkb({0x00, 0x00});
+
+            // Set type and precision
+            setTypeAndPrecision(twkb, 0x05, precisionXY);
+
+            // Prepare metadata header
+            // bbox | size | idlist | extended dimensions | empty geom
+            setMetadataBits(twkb, bbox, false, false, true, false);
+
+            // Add extendet dimension information
+            addZTDimensions(twkb, precisionZ, precisionT);
+
+            // Add bounding box - if selected
+            if (bbox) {
+
+                int minx = shrink(lines.front().front().x, precisionXY);
+                int maxx = minx;
+                int miny = shrink(lines.front().front().y, precisionXY);
+                int maxy = miny;
+                int minz = shrink(lines.front().front().z, precisionZ);
+                int maxz = minz;
+                int mint = shrink(lines.front().front().t, precisionT);
+                int maxt = mint;
+
+
+                for (auto &line : lines) {
+
+                    for (auto &location : line) {
+                        int tmpX = shrink(location.x, precisionXY);
+                        int tmpY = shrink(location.y, precisionXY);
+                        int tmpZ = shrink(location.z, precisionZ);
+                        int tmpT = shrink(location.t, precisionT);
+
+                        if (tmpX < minx) minx = tmpX;
+                        if (tmpY < miny) miny = tmpY;
+                        if (tmpZ < minz) minz = tmpZ;
+                        if (tmpT < mint) mint = tmpT;
+                        if (tmpX > maxx) maxx = tmpX;
+                        if (tmpY > maxy) maxy = tmpY;
+                        if (tmpZ > maxz) maxz = tmpZ;
+                        if (tmpT > maxt) maxt = tmpT;
+                    }
+                }
+
+                bytes_t bboxX = encodeVarint(encodeZigZag(minx));
+                bytes_t bboxY = encodeVarint(encodeZigZag(miny));
+                bytes_t bboxZ = encodeVarint(encodeZigZag(minz));
+                bytes_t bboxT = encodeVarint(encodeZigZag(mint));
+                bytes_t deltaX = encodeVarint(encodeZigZag(maxx - minx));
+                bytes_t deltaY = encodeVarint(encodeZigZag(maxy - miny));
+                bytes_t deltaZ = encodeVarint(encodeZigZag(maxz - minz));
+                bytes_t deltaT = encodeVarint(encodeZigZag(maxt - mint));
+
+                append(twkb, bboxX, deltaX, bboxY, deltaY, bboxZ, deltaZ, bboxT, deltaT);
+
+            }
+
+            // Set number of containing points
+            bytes_t nlines = encodeVarint(lines.size());
+            append(twkb, nlines);
+
+
+            int lastXFull = 0;
+            int lastYFull = 0;
+            int lastZFull = 0;
+            int lastTFull = 0;
+
+            for (size_t i = 0; i < lines.size(); i++) {
+
+                auto &points = lines[i];
+
+                bytes_t npoints = encodeVarint(points.size());
+                append(twkb, npoints);
+
+                for (int j = 0; j < points.size(); j++) {
+
+                    auto &point = points[j];
+
+                    int deltaX = shrink(point.x, precisionXY) - lastXFull;
+                    int deltaY = shrink(point.y, precisionXY) - lastYFull;
+                    int deltaZ = shrink(point.z, precisionZ) - lastZFull;
+                    int deltaT = shrink(point.t, precisionT) - lastTFull;
+
+                    bytes_t x = encodeVarint(encodeZigZag(deltaX));
+                    bytes_t y = encodeVarint(encodeZigZag(deltaY));
+                    bytes_t z = encodeVarint(encodeZigZag(deltaZ));
+                    bytes_t t = encodeVarint(encodeZigZag(deltaT));
+
+                    append(twkb, x, y, z, t);
+
+                    lastXFull = shrink(point.x, precisionXY);
+                    lastYFull = shrink(point.y, precisionXY);
+                    lastZFull = shrink(point.z, precisionZ);
+                    lastTFull = shrink(point.t, precisionT);
+
+                }
+            }
+
+            return twkb;
+        }
+
+        bytes_t makeMultiLine(vector<vector<PosXYZ>> lines, char precisionXY, char precisionZ, bool bbox) {
+            bytes_t twkb({0x00, 0x00});
+
+            // Set type and precision
+            setTypeAndPrecision(twkb, 0x05, precisionXY);
+
+            // Prepare metadata header
+            // bbox | size | idlist | extended dimensions | empty geom
+            setMetadataBits(twkb, bbox, false, false, true, false);
+
+            // Add extendet dimension information
+            addZDimensions(twkb, precisionZ);
+
+            // Add bounding box - if selected
+            if (bbox) {
+
+                int minx = shrink(lines.front().front().x, precisionXY);
+                int maxx = minx;
+                int miny = shrink(lines.front().front().y, precisionXY);
+                int maxy = miny;
+                int minz = shrink(lines.front().front().z, precisionZ);
+                int maxz = minz;
+
+
+                for (auto &line : lines) {
+
+                    for (auto &location : line) {
+                        int tmpX = shrink(location.x, precisionXY);
+                        int tmpY = shrink(location.y, precisionXY);
+                        int tmpZ = shrink(location.z, precisionZ);
+
+                        if (tmpX < minx) minx = tmpX;
+                        if (tmpY < miny) miny = tmpY;
+                        if (tmpZ < minz) minz = tmpZ;
+                        if (tmpX > maxx) maxx = tmpX;
+                        if (tmpY > maxy) maxy = tmpY;
+                        if (tmpZ > maxz) maxz = tmpZ;
+                    }
+                }
+
+                bytes_t bboxX = encodeVarint(encodeZigZag(minx));
+                bytes_t bboxY = encodeVarint(encodeZigZag(miny));
+                bytes_t bboxZ = encodeVarint(encodeZigZag(minz));
+                bytes_t deltaX = encodeVarint(encodeZigZag(maxx - minx));
+                bytes_t deltaY = encodeVarint(encodeZigZag(maxy - miny));
+                bytes_t deltaZ = encodeVarint(encodeZigZag(maxz - minz));
+
+                append(twkb, bboxX, deltaX, bboxY, deltaY, bboxZ, deltaZ);
+
+            }
+
+            // Set number of containing points
+            bytes_t nlines = encodeVarint(lines.size());
+            append(twkb, nlines);
+
+
+            int lastXFull = 0;
+            int lastYFull = 0;
+            int lastZFull = 0;
+            int lastTFull = 0;
+
+            for (size_t i = 0; i < lines.size(); i++) {
+
+                auto &points = lines[i];
+
+                bytes_t npoints = encodeVarint(points.size());
+                append(twkb, npoints);
+
+                for (int j = 0; j < points.size(); j++) {
+
+                    auto &point = points[j];
+
+                    int deltaX = shrink(point.x, precisionXY) - lastXFull;
+                    int deltaY = shrink(point.y, precisionXY) - lastYFull;
+                    int deltaZ = shrink(point.z, precisionZ) - lastZFull;
+
+                    bytes_t x = encodeVarint(encodeZigZag(deltaX));
+                    bytes_t y = encodeVarint(encodeZigZag(deltaY));
+                    bytes_t z = encodeVarint(encodeZigZag(deltaZ));
+
+                    append(twkb, x, y, z);
+
+                    lastXFull = shrink(point.x, precisionXY);
+                    lastYFull = shrink(point.y, precisionXY);
+                    lastZFull = shrink(point.z, precisionZ);
+
+                }
+            }
+
+            return twkb;
+        }
+
+        bytes_t makeMultiLine(vector<vector<PosXY>> lines, char precisionXY, bool bbox) {
+            bytes_t twkb({0x00, 0x00});
+
+            // Set type and precision
+            setTypeAndPrecision(twkb, 0x05, precisionXY);
+
+            // Prepare metadata header
+            // bbox | size | idlist | extended dimensions | empty geom
+            setMetadataBits(twkb, bbox, false, false, false, false);
+
+            // Add bounding box - if selected
+            if (bbox) {
+
+                int minx = shrink(lines.front().front().x, precisionXY);
+                int maxx = minx;
+                int miny = shrink(lines.front().front().y, precisionXY);
+                int maxy = miny;
+
+                for (auto &line : lines) {
+
+                    for (auto &location : line) {
+                        int tmpX = shrink(location.x, precisionXY);
+                        int tmpY = shrink(location.y, precisionXY);
+
+                        if (tmpX < minx) minx = tmpX;
+                        if (tmpY < miny) miny = tmpY;
+                        if (tmpX > maxx) maxx = tmpX;
+                        if (tmpY > maxy) maxy = tmpY;
+                    }
+                }
+
+                bytes_t bboxX = encodeVarint(encodeZigZag(minx));
+                bytes_t bboxY = encodeVarint(encodeZigZag(miny));
+                bytes_t deltaX = encodeVarint(encodeZigZag(maxx - minx));
+                bytes_t deltaY = encodeVarint(encodeZigZag(maxy - miny));
+
+                append(twkb, bboxX, deltaX, bboxY, deltaY);
+
+            }
+
+            // Set number of containing points
+            bytes_t nlines = encodeVarint(lines.size());
+            append(twkb, nlines);
+
+            int lastXFull = 0;
+            int lastYFull = 0;
+            int lastZFull = 0;
+            int lastTFull = 0;
+
+            for (size_t i = 0; i < lines.size(); i++) {
+
+                auto &points = lines[i];
+
+                bytes_t npoints = encodeVarint(points.size());
+                append(twkb, npoints);
+
+                for (int j = 0; j < points.size(); j++) {
+
+                    auto &point = points[j];
+
+                    int deltaX = shrink(point.x, precisionXY) - lastXFull;
+                    int deltaY = shrink(point.y, precisionXY) - lastYFull;
+
+                    bytes_t x = encodeVarint(encodeZigZag(deltaX));
+                    bytes_t y = encodeVarint(encodeZigZag(deltaY));
+
+                    append(twkb, x, y);
+
+                    lastXFull = shrink(point.x, precisionXY);
+                    lastYFull = shrink(point.y, precisionXY);
+                }
+            }
+
+            return twkb;
+        }
     };
 
 };
