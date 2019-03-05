@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/Tobias-Werner/twkb-header-only.svg?branch=dev)](https://travis-ci.org/Tobias-Werner/twkb-header-only)
 # Encoding TWKB geometries
-This library encodes and decodes geometries by using the Tiny Well-Known Binary (TWKB) format. Neither prior compilation nor installation of dependencies required.
+This library encodes and decodes geometries by using the Tiny Well-Known Binary (TWKB) format. Neither prior compilation nor installation of dependencies required. Just include the file TWKB.h.
 
 ### Examples
 

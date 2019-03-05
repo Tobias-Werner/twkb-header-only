@@ -36,13 +36,13 @@ namespace TWKB {
 
     private:
 
-        void setTypeAndPrecision(bytes_t &twkb, unsigned char type, char precisionXY) {
+        void setTypeAndPrecision(bytes_t &twkb, const unsigned char &type, const signed char &precisionXY) {
             auto &header = twkb[0];
             header |= type;
             header |= encodeZigZag(precisionXY) << 4;
         }
 
-        void setMetadataBits(bytes_t &twkb, bool bbox, bool sizes, bool idlist, bool extendedDimensions, bool emptyGeom) {
+        void setMetadataBits(bytes_t &twkb, const bool &bbox, const bool &sizes, const bool &idlist, const bool &extendedDimensions, const bool &emptyGeom) {
             auto &metadataHeader = twkb[1];
             metadataHeader |= (bbox) ? 0x01 : 0x00;
             metadataHeader |= (sizes) ? 0x02 : 0x00;
@@ -51,31 +51,31 @@ namespace TWKB {
             metadataHeader |= (emptyGeom) ? 0x10 : 0x00;
         }
 
-        void addZDimensions(bytes_t &twkb, unsigned char precisionZ) {
+        void addZDimensions(bytes_t &twkb, const unsigned char &precisionZ) {
             unsigned char extendedInformation = 0x01;
             extendedInformation |= (precisionZ << 2);
             twkb.push_back(extendedInformation);
         }
 
-        void addZTDimensions(bytes_t &twkb, unsigned char precisionZ, unsigned char precisionT) {
+        void addZTDimensions(bytes_t &twkb, const unsigned char &precisionZ, const unsigned char &precisionT) {
             unsigned char extendedInformation = 0x03;
             extendedInformation |= (precisionZ << 2);
             extendedInformation |= (precisionT << 5);
             twkb.push_back(extendedInformation);
         }
 
-        int shrink(double value, char precision) {
+        int shrink(const double &value, const signed char &precision) {
             return (precision >= 0) ? round(value * pow10(precision)) : round(value / pow10(-precision));
         }
 
-        bytes_t encode(double value, char precision) {
+        bytes_t encode(const double &value, const signed char &precision) {
             return encodeVarint(encodeZigZag(shrink(value, precision)));
         }
 
         void append(bytes_t &twkb) {}
 
         template<typename T, typename... Types>
-        void append(bytes_t &twkb, T var1, Types... var2) {
+        void append(bytes_t &twkb, const T &var1, const Types... var2) {
             twkb.insert(twkb.end(), var1.begin(), var1.end());
             append(twkb, var2...);
         }
@@ -107,12 +107,12 @@ namespace TWKB {
             }
         }
 
-        static unsigned int decodeVarint(bytes_t bytes) {
+        static unsigned int decodeVarint(const bytes_t &bytes) {
 
             unsigned int result = 0x00;
 
             for (size_t i = bytes.size(); i > 0; i--) {
-                result |= (bytes.at(i - 1) & 0x7F);
+                result |= (bytes[i - 1] & 0x7F);
                 result <<= (i - 1 > 0) ? 7 : 0;
             }
 
@@ -132,15 +132,15 @@ namespace TWKB {
             return result;
         }
 
-        static unsigned int encodeZigZag(int value) {
+        static unsigned int encodeZigZag(const int &value) {
             return (value << 1) ^ (value >> 31);
         }
 
-        static int decodeZigZag(unsigned int value) {
+        static int decodeZigZag(const unsigned int &value) {
             return -(value & 1) ^ (value >> 1);
         }
 
-        bytes_t makePoint(PosXY location, char precisionXY) {
+        bytes_t makePoint(const PosXY &location, const signed char &precisionXY) {
 
             bytes_t twkb({0x00, 0x00});
 
@@ -160,7 +160,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makePoint(PosXYZ location, char precisionXY, char precisionZ) {
+        bytes_t makePoint(const PosXYZ &location, const signed char &precisionXY, const signed char &precisionZ) {
 
             bytes_t twkb({0x00, 0x00});
 
@@ -182,7 +182,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makePoint(PosXYZT location, char precisionXY, char precisionZ, char precisionT) {
+        bytes_t makePoint(PosXYZT location, signed char precisionXY, signed char precisionZ, signed char precisionT) {
 
             bytes_t twkb({0x00, 0x00});
 
@@ -205,7 +205,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeLine(vector<PosXY> locations, char precisionXY, bool bbox) {
+        bytes_t makeLine(vector<PosXY> locations, signed char precisionXY, bool bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -272,7 +272,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeLine(vector<PosXYZ> locations, char precisionXY, char precisionZ, bool bbox) {
+        bytes_t makeLine(vector<PosXYZ> locations, signed char precisionXY, signed char precisionZ, bool bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -355,7 +355,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeLine(vector<PosXYZT> locations, char precisionXY, char precisionZ, char precisionT, bool bbox) {
+        bytes_t makeLine(vector<PosXYZT> locations, signed char precisionXY, signed char precisionZ, signed char precisionT, bool bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -450,7 +450,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makePolygon(vector<vector<PosXY>> rings, char precisionXY, bool bbox) {
+        bytes_t makePolygon(vector<vector<PosXY>> rings, signed char precisionXY, bool bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -492,17 +492,12 @@ namespace TWKB {
             }
 
 
-
-
             // Insert number of containing rings
             bytes_t nrings = encodeVarint(rings.size());
             append(twkb, nrings);
 
-            int lastXFull = shrink(rings.front().front().x, precisionXY);
-            int lastYFull = shrink(rings.front().front().y, precisionXY);
-
-            int deltaX = lastXFull;
-            int deltaY = lastYFull;
+            int lastXFull = 0;
+            int lastYFull = 0;
 
             for (size_t i = 0; i < rings.size(); i++) {
                 auto &pointsInRing = rings[i];
@@ -516,10 +511,8 @@ namespace TWKB {
                     int currentXFull = shrink(pointsInRing[j].x, precisionXY);
                     int currentYFull = shrink(pointsInRing[j].y, precisionXY);
 
-                    if (!(i == 0 && j == 0)) {
-                        deltaX = currentXFull - lastXFull;
-                        deltaY = currentYFull - lastYFull;
-                    }
+                    int deltaX = currentXFull - lastXFull;
+                    int deltaY = currentYFull - lastYFull;
 
                     lastXFull = currentXFull;
                     lastYFull = currentYFull;
@@ -536,7 +529,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makePolygon(vector<vector<PosXYZ>> rings, char precisionXY, char precisionZ, bool bbox) {
+        bytes_t makePolygon(vector<vector<PosXYZ>> rings, signed char precisionXY, signed char precisionZ, bool bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -589,13 +582,9 @@ namespace TWKB {
             bytes_t nrings = encodeVarint(rings.size());
             append(twkb, nrings);
 
-            int lastXFull = shrink(rings.front().front().x, precisionXY);
-            int lastYFull = shrink(rings.front().front().y, precisionXY);
-            int lastZFull = shrink(rings.front().front().z, precisionZ);
-
-            int deltaX = lastXFull;
-            int deltaY = lastYFull;
-            int deltaZ = lastZFull;
+            int lastXFull = 0;
+            int lastYFull = 0;
+            int lastZFull = 0;
 
             for (size_t i = 0; i < rings.size(); i++) {
                 auto &pointsInRing = rings[i];
@@ -610,11 +599,9 @@ namespace TWKB {
                     int currentYFull = shrink(pointsInRing[j].y, precisionXY);
                     int currentZFull = shrink(pointsInRing[j].z, precisionZ);
 
-                    if (!(i == 0 && j == 0)) {
-                        deltaX = currentXFull - lastXFull;
-                        deltaY = currentYFull - lastYFull;
-                        deltaZ = currentZFull - lastZFull;
-                    }
+                    int deltaX = currentXFull - lastXFull;
+                    int deltaY = currentYFull - lastYFull;
+                    int deltaZ = currentZFull - lastZFull;
 
                     lastXFull = currentXFull;
                     lastYFull = currentYFull;
@@ -633,7 +620,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makePolygon(vector<vector<PosXYZT>> rings, char precisionXY, char precisionZ, char precisionT, bool bbox) {
+        bytes_t makePolygon(vector<vector<PosXYZT>> rings, signed char precisionXY, signed char precisionZ, signed char precisionT, bool bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -693,15 +680,11 @@ namespace TWKB {
             bytes_t nrings = encodeVarint(rings.size());
             append(twkb, nrings);
 
-            int lastXFull = shrink(rings.front().front().x, precisionXY);
-            int lastYFull = shrink(rings.front().front().y, precisionXY);
-            int lastZFull = shrink(rings.front().front().z, precisionZ);
-            int lastTFull = shrink(rings.front().front().t, precisionT);
 
-            int deltaX = lastXFull;
-            int deltaY = lastYFull;
-            int deltaZ = lastZFull;
-            int deltaT = lastTFull;
+            int lastXFull = 0;
+            int lastYFull = 0;
+            int lastZFull = 0;
+            int lastTFull = 0;
 
             for (size_t i = 0; i < rings.size(); i++) {
                 auto &pointsInRing = rings[i];
@@ -717,12 +700,10 @@ namespace TWKB {
                     int currentZFull = shrink(pointsInRing[j].z, precisionZ);
                     int currentTFull = shrink(pointsInRing[j].t, precisionT);
 
-                    if (!(i == 0 && j == 0)) {
-                        deltaX = currentXFull - lastXFull;
-                        deltaY = currentYFull - lastYFull;
-                        deltaZ = currentZFull - lastZFull;
-                        deltaT = currentTFull - lastTFull;
-                    }
+                    int deltaX = currentXFull - lastXFull;
+                    int deltaY = currentYFull - lastYFull;
+                    int deltaZ = currentZFull - lastZFull;
+                    int deltaT = currentTFull - lastTFull;
 
                     lastXFull = currentXFull;
                     lastYFull = currentYFull;
@@ -743,7 +724,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiPoint(vector<PosXY> locations, char precisionXY, bool bbox) {
+        bytes_t makeMultiPoint(vector<PosXY> locations, signed char precisionXY, bool bbox) {
 
             bytes_t twkb({0x00, 0x00});
 
@@ -814,7 +795,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiPoint(vector<PosXYZ> locations, char precisionXY, char precisionZ, bool bbox) {
+        bytes_t makeMultiPoint(vector<PosXYZ> locations, signed char precisionXY, signed char precisionZ, bool bbox) {
 
             bytes_t twkb({0x00, 0x00});
 
@@ -899,7 +880,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiPoint(vector<PosXYZT> locations, char precisionXY, char precisionZ, char precisionT, bool bbox) {
+        bytes_t makeMultiPoint(vector<PosXYZT> locations, signed char precisionXY, signed char precisionZ, signed char precisionT, bool bbox) {
 
             bytes_t twkb({0x00, 0x00});
 
@@ -995,7 +976,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiLine(vector<vector<PosXYZT>> lines, char precisionXY, char precisionZ, char precisionT, bool bbox) {
+        bytes_t makeMultiLine(vector<vector<PosXYZT>> lines, signed char precisionXY, signed char precisionZ, signed char precisionT, bool bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -1097,7 +1078,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiLine(vector<vector<PosXYZ>> lines, char precisionXY, char precisionZ, bool bbox) {
+        bytes_t makeMultiLine(vector<vector<PosXYZ>> lines, signed char precisionXY, signed char precisionZ, bool bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -1189,7 +1170,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiLine(vector<vector<PosXY>> lines, char precisionXY, bool bbox) {
+        bytes_t makeMultiLine(vector<vector<PosXY>> lines, signed char precisionXY, bool bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
