@@ -182,7 +182,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makePoint(PosXYZT location, signed char precisionXY, signed char precisionZ, signed char precisionT) {
+        bytes_t makePoint(const PosXYZT &location, const signed char &precisionXY, const signed char &precisionZ, const signed char &precisionT) {
 
             bytes_t twkb({0x00, 0x00});
 
@@ -205,7 +205,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeLine(vector<PosXY> locations, signed char precisionXY, bool bbox) {
+        bytes_t makeLine(const vector<PosXY> &locations, const signed char &precisionXY, const bool &bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -222,7 +222,7 @@ namespace TWKB {
                 int miny = shrink(locations.front().y, precisionXY);
                 int maxy = miny;
 
-                for (auto &location : locations) {
+                for (const auto &location : locations) {
                     int tmpX = shrink(location.x, precisionXY);
                     int tmpY = shrink(location.y, precisionXY);
 
@@ -254,7 +254,7 @@ namespace TWKB {
 
             append(twkb, x, y);
 
-            for (int i = 1; i < locations.size(); i++) {
+            for (size_t i = 1; i < locations.size(); i++) {
 
                 int deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
                 int deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
@@ -272,7 +272,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeLine(vector<PosXYZ> locations, signed char precisionXY, signed char precisionZ, bool bbox) {
+        bytes_t makeLine(const vector<PosXYZ> &locations, const signed char &precisionXY, const signed char &precisionZ, const bool &bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -295,7 +295,7 @@ namespace TWKB {
                 int minz = shrink(locations.front().z, precisionZ);
                 int maxz = minz;
 
-                for (auto &location : locations) {
+                for (const auto &location : locations) {
                     int tmpX = shrink(location.x, precisionXY);
                     int tmpY = shrink(location.y, precisionXY);
                     int tmpZ = shrink(location.z, precisionZ);
@@ -334,7 +334,7 @@ namespace TWKB {
 
             append(twkb, x, y, z);
 
-            for (int i = 1; i < locations.size(); i++) {
+            for (size_t i = 1; i < locations.size(); i++) {
 
                 int deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
                 int deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
@@ -355,7 +355,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeLine(vector<PosXYZT> locations, signed char precisionXY, signed char precisionZ, signed char precisionT, bool bbox) {
+        bytes_t makeLine(const vector<PosXYZT> &locations, const signed char &precisionXY, const signed char &precisionZ, const signed char &precisionT, const bool &bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -380,7 +380,7 @@ namespace TWKB {
                 int mint = shrink(locations.front().t, precisionT);
                 int maxt = mint;
 
-                for (auto &location : locations) {
+                for (const auto &location : locations) {
                     int tmpX = shrink(location.x, precisionXY);
                     int tmpY = shrink(location.y, precisionXY);
                     int tmpZ = shrink(location.z, precisionZ);
@@ -426,7 +426,7 @@ namespace TWKB {
 
             append(twkb, x, y, z, t);
 
-            for (int i = 1; i < locations.size(); i++) {
+            for (size_t i = 1; i < locations.size(); i++) {
 
                 int deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
                 int deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
@@ -450,7 +450,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makePolygon(vector<vector<PosXY>> rings, signed char precisionXY, bool bbox) {
+        bytes_t makePolygon(const vector<vector<PosXY>> &rings, const signed char &precisionXY, const bool &bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -468,9 +468,9 @@ namespace TWKB {
                 int miny = shrink(rings.front().front().y, precisionXY);
                 int maxy = miny;
 
-                for (auto &ring : rings) {
+                for (const auto &ring : rings) {
 
-                    for (auto &location : ring) {
+                    for (const auto &location : ring) {
                         int tmpX = shrink(location.x, precisionXY);
                         int tmpY = shrink(location.y, precisionXY);
 
@@ -506,7 +506,7 @@ namespace TWKB {
                 bytes_t npoints = encodeVarint(pointsInRing.size());
                 append(twkb, npoints);
 
-                for (int j = 0; j < pointsInRing.size(); j++) {
+                for (size_t j = 0; j < pointsInRing.size(); j++) {
 
                     int currentXFull = shrink(pointsInRing[j].x, precisionXY);
                     int currentYFull = shrink(pointsInRing[j].y, precisionXY);
@@ -529,7 +529,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makePolygon(vector<vector<PosXYZ>> rings, signed char precisionXY, signed char precisionZ, bool bbox) {
+        bytes_t makePolygon(const vector<vector<PosXYZ>> &rings, const signed char &precisionXY, const signed char &precisionZ, const bool &bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -550,9 +550,9 @@ namespace TWKB {
                 int minz = shrink(rings.front().front().z, precisionZ);
                 int maxz = minz;
 
-                for (auto &ring : rings) {
+                for (const auto &ring : rings) {
 
-                    for (auto &location : ring) {
+                    for (const auto &location : ring) {
                         int tmpX = shrink(location.x, precisionXY);
                         int tmpY = shrink(location.y, precisionXY);
                         int tmpZ = shrink(location.z, precisionZ);
@@ -587,13 +587,13 @@ namespace TWKB {
             int lastZFull = 0;
 
             for (size_t i = 0; i < rings.size(); i++) {
-                auto &pointsInRing = rings[i];
+                const auto &pointsInRing = rings[i];
 
                 // Set number of containing pointsInRing
                 bytes_t npoints = encodeVarint(pointsInRing.size());
                 append(twkb, npoints);
 
-                for (int j = 0; j < pointsInRing.size(); j++) {
+                for (size_t j = 0; j < pointsInRing.size(); j++) {
 
                     int currentXFull = shrink(pointsInRing[j].x, precisionXY);
                     int currentYFull = shrink(pointsInRing[j].y, precisionXY);
@@ -620,7 +620,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makePolygon(vector<vector<PosXYZT>> rings, signed char precisionXY, signed char precisionZ, signed char precisionT, bool bbox) {
+        bytes_t makePolygon(const vector<vector<PosXYZT>> &rings, const signed char &precisionXY, const signed char &precisionZ, const signed char &precisionT, const bool &bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -643,9 +643,9 @@ namespace TWKB {
                 int mint = shrink(rings.front().front().t, precisionT);
                 int maxt = mint;
 
-                for (auto &ring : rings) {
+                for (const auto &ring : rings) {
 
-                    for (auto &location : ring) {
+                    for (const auto &location : ring) {
                         int tmpX = shrink(location.x, precisionXY);
                         int tmpY = shrink(location.y, precisionXY);
                         int tmpZ = shrink(location.z, precisionZ);
@@ -693,7 +693,7 @@ namespace TWKB {
                 bytes_t npoints = encodeVarint(pointsInRing.size());
                 append(twkb, npoints);
 
-                for (int j = 0; j < pointsInRing.size(); j++) {
+                for (size_t j = 0; j < pointsInRing.size(); j++) {
 
                     int currentXFull = shrink(pointsInRing[j].x, precisionXY);
                     int currentYFull = shrink(pointsInRing[j].y, precisionXY);
@@ -724,7 +724,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiPoint(vector<PosXY> locations, signed char precisionXY, bool bbox) {
+        bytes_t makeMultiPoint(const vector<PosXY> &locations, const signed char &precisionXY, const bool &bbox) {
 
             bytes_t twkb({0x00, 0x00});
 
@@ -742,7 +742,7 @@ namespace TWKB {
                 int miny = shrink(locations.front().y, precisionXY);
                 int maxy = miny;
 
-                for (auto &location : locations) {
+                for (const auto &location : locations) {
 
                     int tmpX = shrink(location.x, precisionXY);
                     int tmpY = shrink(location.y, precisionXY);
@@ -776,7 +776,7 @@ namespace TWKB {
 
             append(twkb, x, y);
 
-            for (int i = 1; i < locations.size(); i++) {
+            for (size_t i = 1; i < locations.size(); i++) {
 
                 int deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
                 int deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
@@ -795,7 +795,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiPoint(vector<PosXYZ> locations, signed char precisionXY, signed char precisionZ, bool bbox) {
+        bytes_t makeMultiPoint(const vector<PosXYZ> &locations, const signed char &precisionXY, const signed char &precisionZ, const bool &bbox) {
 
             bytes_t twkb({0x00, 0x00});
 
@@ -817,7 +817,7 @@ namespace TWKB {
                 int minz = shrink(locations.front().z, precisionZ);
                 int maxz = minz;
 
-                for (auto &location : locations) {
+                for (const auto &location : locations) {
 
                     int tmpX = shrink(location.x, precisionXY);
                     int tmpY = shrink(location.y, precisionXY);
@@ -858,7 +858,7 @@ namespace TWKB {
 
             append(twkb, x, y, z);
 
-            for (int i = 1; i < locations.size(); i++) {
+            for (size_t i = 1; i < locations.size(); i++) {
 
                 int deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
                 int deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
@@ -880,7 +880,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiPoint(vector<PosXYZT> locations, signed char precisionXY, signed char precisionZ, signed char precisionT, bool bbox) {
+        bytes_t makeMultiPoint(const vector<PosXYZT> &locations, const signed char &precisionXY, const signed char &precisionZ, const signed char &precisionT, const bool &bbox) {
 
             bytes_t twkb({0x00, 0x00});
 
@@ -904,7 +904,7 @@ namespace TWKB {
                 int mint = shrink(locations.front().t, precisionT);
                 int maxt = mint;
 
-                for (auto &location : locations) {
+                for (const auto &location : locations) {
 
                     int tmpX = shrink(location.x, precisionXY);
                     int tmpY = shrink(location.y, precisionXY);
@@ -951,7 +951,7 @@ namespace TWKB {
 
             append(twkb, x, y, z, t);
 
-            for (int i = 1; i < locations.size(); i++) {
+            for (size_t i = 1; i < locations.size(); i++) {
 
                 int deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
                 int deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
@@ -976,7 +976,8 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiLine(vector<vector<PosXYZT>> lines, signed char precisionXY, signed char precisionZ, signed char precisionT, bool bbox) {
+        bytes_t
+        makeMultiLine(const vector<vector<PosXYZT>> &lines, const signed char &precisionXY, const signed char &precisionZ, const signed char &precisionT, const bool &bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -1002,9 +1003,9 @@ namespace TWKB {
                 int maxt = mint;
 
 
-                for (auto &line : lines) {
+                for (const auto &line : lines) {
 
-                    for (auto &location : line) {
+                    for (const auto &location : line) {
                         int tmpX = shrink(location.x, precisionXY);
                         int tmpY = shrink(location.y, precisionXY);
                         int tmpZ = shrink(location.z, precisionZ);
@@ -1046,14 +1047,14 @@ namespace TWKB {
 
             for (size_t i = 0; i < lines.size(); i++) {
 
-                auto &points = lines[i];
+                const auto &points = lines[i];
 
                 bytes_t npoints = encodeVarint(points.size());
                 append(twkb, npoints);
 
-                for (int j = 0; j < points.size(); j++) {
+                for (size_t j = 0; j < points.size(); j++) {
 
-                    auto &point = points[j];
+                    const auto &point = points[j];
 
                     int deltaX = shrink(point.x, precisionXY) - lastXFull;
                     int deltaY = shrink(point.y, precisionXY) - lastYFull;
@@ -1078,7 +1079,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiLine(vector<vector<PosXYZ>> lines, signed char precisionXY, signed char precisionZ, bool bbox) {
+        bytes_t makeMultiLine(const vector<vector<PosXYZ>> &lines, const signed char &precisionXY, const signed char &precisionZ, const bool &bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -1102,9 +1103,9 @@ namespace TWKB {
                 int maxz = minz;
 
 
-                for (auto &line : lines) {
+                for (const auto &line : lines) {
 
-                    for (auto &location : line) {
+                    for (const auto &location : line) {
                         int tmpX = shrink(location.x, precisionXY);
                         int tmpY = shrink(location.y, precisionXY);
                         int tmpZ = shrink(location.z, precisionZ);
@@ -1137,18 +1138,17 @@ namespace TWKB {
             int lastXFull = 0;
             int lastYFull = 0;
             int lastZFull = 0;
-            int lastTFull = 0;
 
             for (size_t i = 0; i < lines.size(); i++) {
 
-                auto &points = lines[i];
+                const auto &points = lines[i];
 
                 bytes_t npoints = encodeVarint(points.size());
                 append(twkb, npoints);
 
-                for (int j = 0; j < points.size(); j++) {
+                for (size_t j = 0; j < points.size(); j++) {
 
-                    auto &point = points[j];
+                    const auto &point = points[j];
 
                     int deltaX = shrink(point.x, precisionXY) - lastXFull;
                     int deltaY = shrink(point.y, precisionXY) - lastYFull;
@@ -1170,7 +1170,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiLine(vector<vector<PosXY>> lines, signed char precisionXY, bool bbox) {
+        bytes_t makeMultiLine(const vector<vector<PosXY>> &lines, const signed char &precisionXY, const bool &bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -1188,9 +1188,9 @@ namespace TWKB {
                 int miny = shrink(lines.front().front().y, precisionXY);
                 int maxy = miny;
 
-                for (auto &line : lines) {
+                for (const auto &line : lines) {
 
-                    for (auto &location : line) {
+                    for (const auto &location : line) {
                         int tmpX = shrink(location.x, precisionXY);
                         int tmpY = shrink(location.y, precisionXY);
 
@@ -1216,19 +1216,17 @@ namespace TWKB {
 
             int lastXFull = 0;
             int lastYFull = 0;
-            int lastZFull = 0;
-            int lastTFull = 0;
 
             for (size_t i = 0; i < lines.size(); i++) {
 
-                auto &points = lines[i];
+                const auto &points = lines[i];
 
                 bytes_t npoints = encodeVarint(points.size());
                 append(twkb, npoints);
 
-                for (int j = 0; j < points.size(); j++) {
+                for (size_t j = 0; j < points.size(); j++) {
 
-                    auto &point = points[j];
+                    const auto &point = points[j];
 
                     int deltaX = shrink(point.x, precisionXY) - lastXFull;
                     int deltaY = shrink(point.y, precisionXY) - lastYFull;
