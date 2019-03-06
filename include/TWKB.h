@@ -64,7 +64,7 @@ namespace TWKB {
             twkb.push_back(extendedInformation);
         }
 
-        int shrink(const double &value, const signed char &precision) {
+        int32_t shrink(const double &value, const signed char &precision) {
             return (precision >= 0) ? round(value * pow10(precision)) : round(value / pow10(-precision));
         }
 
@@ -82,34 +82,14 @@ namespace TWKB {
 
     public:
 
-        static int pow10(unsigned char base) {
-            switch (base) {
-                case 0 :
-                    return 1;
-                case 1 :
-                    return 10;
-                case 2 :
-                    return 100;
-                case 3 :
-                    return 1000;
-                case 4 :
-                    return 10000;
-                case 5 :
-                    return 100000;
-                case 6 :
-                    return 1000000;
-                case 7 :
-                    return 10000000;
-                case 8 :
-                    return 100000000;
-                default:
-                    return 0;
-            }
+        static int32_t pow10(unsigned char exponent) {
+            static uint32_t pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000};
+            return pow10[exponent];
         }
 
-        static unsigned int decodeVarint(const bytes_t &bytes) {
+        static int32_t decodeVarint(const bytes_t &bytes) {
 
-            unsigned int result = 0x00;
+            int32_t result = 0x00;
 
             for (size_t i = bytes.size(); i > 0; i--) {
                 result |= (bytes[i - 1] & 0x7F);
@@ -119,7 +99,7 @@ namespace TWKB {
             return result;
         }
 
-        static bytes_t encodeVarint(unsigned int value) {
+        static bytes_t encodeVarint(int32_t value) {
             bytes_t result;
 
             do {
@@ -132,11 +112,11 @@ namespace TWKB {
             return result;
         }
 
-        static unsigned int encodeZigZag(const int &value) {
+        static int32_t encodeZigZag(const int32_t &value) {
             return (value << 1) ^ (value >> 31);
         }
 
-        static int decodeZigZag(const unsigned int &value) {
+        static int32_t decodeZigZag(const uint32_t &value) {
             return -(value & 1) ^ (value >> 1);
         }
 
@@ -217,14 +197,14 @@ namespace TWKB {
 
             if (bbox) {
 
-                int minx = shrink(locations.front().x, precisionXY);
-                int maxx = minx;
-                int miny = shrink(locations.front().y, precisionXY);
-                int maxy = miny;
+                int32_t minx = shrink(locations.front().x, precisionXY);
+                int32_t maxx = minx;
+                int32_t miny = shrink(locations.front().y, precisionXY);
+                int32_t maxy = miny;
 
                 for (const auto &location : locations) {
-                    int tmpX = shrink(location.x, precisionXY);
-                    int tmpY = shrink(location.y, precisionXY);
+                    int32_t tmpX = shrink(location.x, precisionXY);
+                    int32_t tmpY = shrink(location.y, precisionXY);
 
                     if (tmpX < minx) minx = tmpX;
                     if (tmpY < miny) miny = tmpY;
@@ -246,8 +226,8 @@ namespace TWKB {
 
             append(twkb, npoints);
 
-            int xShrinked = shrink(locations.front().x, precisionXY);
-            int yShrinked = shrink(locations.front().y, precisionXY);
+            int32_t xShrinked = shrink(locations.front().x, precisionXY);
+            int32_t yShrinked = shrink(locations.front().y, precisionXY);
 
             bytes_t x = encodeVarint(encodeZigZag(xShrinked));
             bytes_t y = encodeVarint(encodeZigZag(yShrinked));
@@ -256,8 +236,8 @@ namespace TWKB {
 
             for (size_t i = 1; i < locations.size(); i++) {
 
-                int deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
-                int deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
+                int32_t deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
+                int32_t deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
 
                 x = encodeVarint(encodeZigZag(deltaX));
                 y = encodeVarint(encodeZigZag(deltaY));
@@ -288,17 +268,17 @@ namespace TWKB {
             // Add bounding box - if selected
             if (bbox) {
 
-                int minx = shrink(locations.front().x, precisionXY);
-                int maxx = minx;
-                int miny = shrink(locations.front().y, precisionXY);
-                int maxy = miny;
-                int minz = shrink(locations.front().z, precisionZ);
-                int maxz = minz;
+                int32_t minx = shrink(locations.front().x, precisionXY);
+                int32_t maxx = minx;
+                int32_t miny = shrink(locations.front().y, precisionXY);
+                int32_t maxy = miny;
+                int32_t minz = shrink(locations.front().z, precisionZ);
+                int32_t maxz = minz;
 
                 for (const auto &location : locations) {
-                    int tmpX = shrink(location.x, precisionXY);
-                    int tmpY = shrink(location.y, precisionXY);
-                    int tmpZ = shrink(location.z, precisionZ);
+                    int32_t tmpX = shrink(location.x, precisionXY);
+                    int32_t tmpY = shrink(location.y, precisionXY);
+                    int32_t tmpZ = shrink(location.z, precisionZ);
 
                     if (tmpX < minx) minx = tmpX;
                     if (tmpY < miny) miny = tmpY;
@@ -324,9 +304,9 @@ namespace TWKB {
             bytes_t npoints = encodeVarint(locations.size());
             twkb.insert(twkb.end(), npoints.begin(), npoints.end());
 
-            int xShrinked = shrink(locations.front().x, precisionXY);
-            int yShrinked = shrink(locations.front().y, precisionXY);
-            int zShrinked = shrink(locations.front().z, precisionZ);
+            int32_t xShrinked = shrink(locations.front().x, precisionXY);
+            int32_t yShrinked = shrink(locations.front().y, precisionXY);
+            int32_t zShrinked = shrink(locations.front().z, precisionZ);
 
             bytes_t x = encodeVarint(encodeZigZag(xShrinked));
             bytes_t y = encodeVarint(encodeZigZag(yShrinked));
@@ -336,9 +316,9 @@ namespace TWKB {
 
             for (size_t i = 1; i < locations.size(); i++) {
 
-                int deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
-                int deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
-                int deltaZ = shrink(locations[i].z, precisionZ) - zShrinked;
+                int32_t deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
+                int32_t deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
+                int32_t deltaZ = shrink(locations[i].z, precisionZ) - zShrinked;
 
                 x = encodeVarint(encodeZigZag(deltaX));
                 y = encodeVarint(encodeZigZag(deltaY));
@@ -371,20 +351,20 @@ namespace TWKB {
             // Add bounding box - if selected
             if (bbox) {
 
-                int minx = shrink(locations.front().x, precisionXY);
-                int maxx = minx;
-                int miny = shrink(locations.front().y, precisionXY);
-                int maxy = miny;
-                int minz = shrink(locations.front().z, precisionZ);
-                int maxz = minz;
-                int mint = shrink(locations.front().t, precisionT);
-                int maxt = mint;
+                int32_t minx = shrink(locations.front().x, precisionXY);
+                int32_t maxx = minx;
+                int32_t miny = shrink(locations.front().y, precisionXY);
+                int32_t maxy = miny;
+                int32_t minz = shrink(locations.front().z, precisionZ);
+                int32_t maxz = minz;
+                int32_t mint = shrink(locations.front().t, precisionT);
+                int32_t maxt = mint;
 
                 for (const auto &location : locations) {
-                    int tmpX = shrink(location.x, precisionXY);
-                    int tmpY = shrink(location.y, precisionXY);
-                    int tmpZ = shrink(location.z, precisionZ);
-                    int tmpT = shrink(location.t, precisionT);
+                    int32_t tmpX = shrink(location.x, precisionXY);
+                    int32_t tmpY = shrink(location.y, precisionXY);
+                    int32_t tmpZ = shrink(location.z, precisionZ);
+                    int32_t tmpT = shrink(location.t, precisionT);
 
                     if (tmpX < minx) minx = tmpX;
                     if (tmpY < miny) miny = tmpY;
@@ -414,10 +394,10 @@ namespace TWKB {
             bytes_t npoints = encodeVarint(locations.size());
             twkb.insert(twkb.end(), npoints.begin(), npoints.end());
 
-            int xShrinked = shrink(locations.front().x, precisionXY);
-            int yShrinked = shrink(locations.front().y, precisionXY);
-            int zShrinked = shrink(locations.front().z, precisionZ);
-            int tShrinked = shrink(locations.front().t, precisionT);
+            int32_t xShrinked = shrink(locations.front().x, precisionXY);
+            int32_t yShrinked = shrink(locations.front().y, precisionXY);
+            int32_t zShrinked = shrink(locations.front().z, precisionZ);
+            int32_t tShrinked = shrink(locations.front().t, precisionT);
 
             bytes_t x = encodeVarint(encodeZigZag(xShrinked));
             bytes_t y = encodeVarint(encodeZigZag(yShrinked));
@@ -428,10 +408,10 @@ namespace TWKB {
 
             for (size_t i = 1; i < locations.size(); i++) {
 
-                int deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
-                int deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
-                int deltaZ = shrink(locations[i].z, precisionZ) - zShrinked;
-                int deltaT = shrink(locations[i].t, precisionT) - tShrinked;
+                int32_t deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
+                int32_t deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
+                int32_t deltaZ = shrink(locations[i].z, precisionZ) - zShrinked;
+                int32_t deltaT = shrink(locations[i].t, precisionT) - tShrinked;
 
                 x = encodeVarint(encodeZigZag(deltaX));
                 y = encodeVarint(encodeZigZag(deltaY));
@@ -463,16 +443,16 @@ namespace TWKB {
 
             if (bbox) {
 
-                int minx = shrink(rings.front().front().x, precisionXY);
-                int maxx = minx;
-                int miny = shrink(rings.front().front().y, precisionXY);
-                int maxy = miny;
+                int32_t minx = shrink(rings.front().front().x, precisionXY);
+                int32_t maxx = minx;
+                int32_t miny = shrink(rings.front().front().y, precisionXY);
+                int32_t maxy = miny;
 
                 for (const auto &ring : rings) {
 
                     for (const auto &location : ring) {
-                        int tmpX = shrink(location.x, precisionXY);
-                        int tmpY = shrink(location.y, precisionXY);
+                        int32_t tmpX = shrink(location.x, precisionXY);
+                        int32_t tmpY = shrink(location.y, precisionXY);
 
                         if (tmpX < minx) minx = tmpX;
                         if (tmpY < miny) miny = tmpY;
@@ -496,8 +476,8 @@ namespace TWKB {
             bytes_t nrings = encodeVarint(rings.size());
             append(twkb, nrings);
 
-            int lastXFull = 0;
-            int lastYFull = 0;
+            int32_t lastXFull = 0;
+            int32_t lastYFull = 0;
 
             for (size_t i = 0; i < rings.size(); i++) {
                 auto &pointsInRing = rings[i];
@@ -508,11 +488,11 @@ namespace TWKB {
 
                 for (size_t j = 0; j < pointsInRing.size(); j++) {
 
-                    int currentXFull = shrink(pointsInRing[j].x, precisionXY);
-                    int currentYFull = shrink(pointsInRing[j].y, precisionXY);
+                    int32_t currentXFull = shrink(pointsInRing[j].x, precisionXY);
+                    int32_t currentYFull = shrink(pointsInRing[j].y, precisionXY);
 
-                    int deltaX = currentXFull - lastXFull;
-                    int deltaY = currentYFull - lastYFull;
+                    int32_t deltaX = currentXFull - lastXFull;
+                    int32_t deltaY = currentYFull - lastYFull;
 
                     lastXFull = currentXFull;
                     lastYFull = currentYFull;
@@ -543,19 +523,19 @@ namespace TWKB {
 
             if (bbox) {
 
-                int minx = shrink(rings.front().front().x, precisionXY);
-                int maxx = minx;
-                int miny = shrink(rings.front().front().y, precisionXY);
-                int maxy = miny;
-                int minz = shrink(rings.front().front().z, precisionZ);
-                int maxz = minz;
+                int32_t minx = shrink(rings.front().front().x, precisionXY);
+                int32_t maxx = minx;
+                int32_t miny = shrink(rings.front().front().y, precisionXY);
+                int32_t maxy = miny;
+                int32_t minz = shrink(rings.front().front().z, precisionZ);
+                int32_t maxz = minz;
 
                 for (const auto &ring : rings) {
 
                     for (const auto &location : ring) {
-                        int tmpX = shrink(location.x, precisionXY);
-                        int tmpY = shrink(location.y, precisionXY);
-                        int tmpZ = shrink(location.z, precisionZ);
+                        int32_t tmpX = shrink(location.x, precisionXY);
+                        int32_t tmpY = shrink(location.y, precisionXY);
+                        int32_t tmpZ = shrink(location.z, precisionZ);
 
                         if (tmpX < minx) minx = tmpX;
                         if (tmpY < miny) miny = tmpY;
@@ -582,9 +562,9 @@ namespace TWKB {
             bytes_t nrings = encodeVarint(rings.size());
             append(twkb, nrings);
 
-            int lastXFull = 0;
-            int lastYFull = 0;
-            int lastZFull = 0;
+            int32_t lastXFull = 0;
+            int32_t lastYFull = 0;
+            int32_t lastZFull = 0;
 
             for (size_t i = 0; i < rings.size(); i++) {
                 const auto &pointsInRing = rings[i];
@@ -595,13 +575,13 @@ namespace TWKB {
 
                 for (size_t j = 0; j < pointsInRing.size(); j++) {
 
-                    int currentXFull = shrink(pointsInRing[j].x, precisionXY);
-                    int currentYFull = shrink(pointsInRing[j].y, precisionXY);
-                    int currentZFull = shrink(pointsInRing[j].z, precisionZ);
+                    int32_t currentXFull = shrink(pointsInRing[j].x, precisionXY);
+                    int32_t currentYFull = shrink(pointsInRing[j].y, precisionXY);
+                    int32_t currentZFull = shrink(pointsInRing[j].z, precisionZ);
 
-                    int deltaX = currentXFull - lastXFull;
-                    int deltaY = currentYFull - lastYFull;
-                    int deltaZ = currentZFull - lastZFull;
+                    int32_t deltaX = currentXFull - lastXFull;
+                    int32_t deltaY = currentYFull - lastYFull;
+                    int32_t deltaZ = currentZFull - lastZFull;
 
                     lastXFull = currentXFull;
                     lastYFull = currentYFull;
@@ -634,22 +614,22 @@ namespace TWKB {
 
             if (bbox) {
 
-                int minx = shrink(rings.front().front().x, precisionXY);
-                int maxx = minx;
-                int miny = shrink(rings.front().front().y, precisionXY);
-                int maxy = miny;
-                int minz = shrink(rings.front().front().z, precisionZ);
-                int maxz = minz;
-                int mint = shrink(rings.front().front().t, precisionT);
-                int maxt = mint;
+                int32_t minx = shrink(rings.front().front().x, precisionXY);
+                int32_t maxx = minx;
+                int32_t miny = shrink(rings.front().front().y, precisionXY);
+                int32_t maxy = miny;
+                int32_t minz = shrink(rings.front().front().z, precisionZ);
+                int32_t maxz = minz;
+                int32_t mint = shrink(rings.front().front().t, precisionT);
+                int32_t maxt = mint;
 
                 for (const auto &ring : rings) {
 
                     for (const auto &location : ring) {
-                        int tmpX = shrink(location.x, precisionXY);
-                        int tmpY = shrink(location.y, precisionXY);
-                        int tmpZ = shrink(location.z, precisionZ);
-                        int tmpT = shrink(location.t, precisionT);
+                        int32_t tmpX = shrink(location.x, precisionXY);
+                        int32_t tmpY = shrink(location.y, precisionXY);
+                        int32_t tmpZ = shrink(location.z, precisionZ);
+                        int32_t tmpT = shrink(location.t, precisionT);
 
                         if (tmpX < minx) minx = tmpX;
                         if (tmpY < miny) miny = tmpY;
@@ -681,10 +661,10 @@ namespace TWKB {
             append(twkb, nrings);
 
 
-            int lastXFull = 0;
-            int lastYFull = 0;
-            int lastZFull = 0;
-            int lastTFull = 0;
+            int32_t lastXFull = 0;
+            int32_t lastYFull = 0;
+            int32_t lastZFull = 0;
+            int32_t lastTFull = 0;
 
             for (size_t i = 0; i < rings.size(); i++) {
                 auto &pointsInRing = rings[i];
@@ -695,15 +675,15 @@ namespace TWKB {
 
                 for (size_t j = 0; j < pointsInRing.size(); j++) {
 
-                    int currentXFull = shrink(pointsInRing[j].x, precisionXY);
-                    int currentYFull = shrink(pointsInRing[j].y, precisionXY);
-                    int currentZFull = shrink(pointsInRing[j].z, precisionZ);
-                    int currentTFull = shrink(pointsInRing[j].t, precisionT);
+                    int32_t currentXFull = shrink(pointsInRing[j].x, precisionXY);
+                    int32_t currentYFull = shrink(pointsInRing[j].y, precisionXY);
+                    int32_t currentZFull = shrink(pointsInRing[j].z, precisionZ);
+                    int32_t currentTFull = shrink(pointsInRing[j].t, precisionT);
 
-                    int deltaX = currentXFull - lastXFull;
-                    int deltaY = currentYFull - lastYFull;
-                    int deltaZ = currentZFull - lastZFull;
-                    int deltaT = currentTFull - lastTFull;
+                    int32_t deltaX = currentXFull - lastXFull;
+                    int32_t deltaY = currentYFull - lastYFull;
+                    int32_t deltaZ = currentZFull - lastZFull;
+                    int32_t deltaT = currentTFull - lastTFull;
 
                     lastXFull = currentXFull;
                     lastYFull = currentYFull;
@@ -737,15 +717,15 @@ namespace TWKB {
 
             if (bbox) {
 
-                int minx = shrink(locations.front().x, precisionXY);
-                int maxx = minx;
-                int miny = shrink(locations.front().y, precisionXY);
-                int maxy = miny;
+                int32_t minx = shrink(locations.front().x, precisionXY);
+                int32_t maxx = minx;
+                int32_t miny = shrink(locations.front().y, precisionXY);
+                int32_t maxy = miny;
 
                 for (const auto &location : locations) {
 
-                    int tmpX = shrink(location.x, precisionXY);
-                    int tmpY = shrink(location.y, precisionXY);
+                    int32_t tmpX = shrink(location.x, precisionXY);
+                    int32_t tmpY = shrink(location.y, precisionXY);
 
                     if (tmpX < minx) minx = tmpX;
                     if (tmpY < miny) miny = tmpY;
@@ -768,8 +748,8 @@ namespace TWKB {
             bytes_t npoints = encodeVarint(locations.size());
             append(twkb, npoints);
 
-            int xShrinked = shrink(locations.front().x, precisionXY);
-            int yShrinked = shrink(locations.front().y, precisionXY);
+            int32_t xShrinked = shrink(locations.front().x, precisionXY);
+            int32_t yShrinked = shrink(locations.front().y, precisionXY);
 
             bytes_t x = encodeVarint(encodeZigZag(xShrinked));
             bytes_t y = encodeVarint(encodeZigZag(yShrinked));
@@ -778,8 +758,8 @@ namespace TWKB {
 
             for (size_t i = 1; i < locations.size(); i++) {
 
-                int deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
-                int deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
+                int32_t deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
+                int32_t deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
 
                 x = encodeVarint(encodeZigZag(deltaX));
                 y = encodeVarint(encodeZigZag(deltaY));
@@ -810,18 +790,18 @@ namespace TWKB {
 
             if (bbox) {
 
-                int minx = shrink(locations.front().x, precisionXY);
-                int maxx = minx;
-                int miny = shrink(locations.front().y, precisionXY);
-                int maxy = miny;
-                int minz = shrink(locations.front().z, precisionZ);
-                int maxz = minz;
+                int32_t minx = shrink(locations.front().x, precisionXY);
+                int32_t maxx = minx;
+                int32_t miny = shrink(locations.front().y, precisionXY);
+                int32_t maxy = miny;
+                int32_t minz = shrink(locations.front().z, precisionZ);
+                int32_t maxz = minz;
 
                 for (const auto &location : locations) {
 
-                    int tmpX = shrink(location.x, precisionXY);
-                    int tmpY = shrink(location.y, precisionXY);
-                    int tmpZ = shrink(location.z, precisionZ);
+                    int32_t tmpX = shrink(location.x, precisionXY);
+                    int32_t tmpY = shrink(location.y, precisionXY);
+                    int32_t tmpZ = shrink(location.z, precisionZ);
 
                     if (tmpX < minx) minx = tmpX;
                     if (tmpY < miny) miny = tmpY;
@@ -848,9 +828,9 @@ namespace TWKB {
             bytes_t npoints = encodeVarint(locations.size());
             append(twkb, npoints);
 
-            int xShrinked = shrink(locations.front().x, precisionXY);
-            int yShrinked = shrink(locations.front().y, precisionXY);
-            int zShrinked = shrink(locations.front().z, precisionZ);
+            int32_t xShrinked = shrink(locations.front().x, precisionXY);
+            int32_t yShrinked = shrink(locations.front().y, precisionXY);
+            int32_t zShrinked = shrink(locations.front().z, precisionZ);
 
             bytes_t x = encodeVarint(encodeZigZag(xShrinked));
             bytes_t y = encodeVarint(encodeZigZag(yShrinked));
@@ -860,9 +840,9 @@ namespace TWKB {
 
             for (size_t i = 1; i < locations.size(); i++) {
 
-                int deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
-                int deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
-                int deltaZ = shrink(locations[i].z, precisionZ) - zShrinked;
+                int32_t deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
+                int32_t deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
+                int32_t deltaZ = shrink(locations[i].z, precisionZ) - zShrinked;
 
                 x = encodeVarint(encodeZigZag(deltaX));
                 y = encodeVarint(encodeZigZag(deltaY));
@@ -895,21 +875,21 @@ namespace TWKB {
 
             if (bbox) {
 
-                int minx = shrink(locations.front().x, precisionXY);
-                int maxx = minx;
-                int miny = shrink(locations.front().y, precisionXY);
-                int maxy = miny;
-                int minz = shrink(locations.front().z, precisionZ);
-                int maxz = minz;
-                int mint = shrink(locations.front().t, precisionT);
-                int maxt = mint;
+                int32_t minx = shrink(locations.front().x, precisionXY);
+                int32_t maxx = minx;
+                int32_t miny = shrink(locations.front().y, precisionXY);
+                int32_t maxy = miny;
+                int32_t minz = shrink(locations.front().z, precisionZ);
+                int32_t maxz = minz;
+                int32_t mint = shrink(locations.front().t, precisionT);
+                int32_t maxt = mint;
 
                 for (const auto &location : locations) {
 
-                    int tmpX = shrink(location.x, precisionXY);
-                    int tmpY = shrink(location.y, precisionXY);
-                    int tmpZ = shrink(location.z, precisionZ);
-                    int tmpT = shrink(location.t, precisionT);
+                    int32_t tmpX = shrink(location.x, precisionXY);
+                    int32_t tmpY = shrink(location.y, precisionXY);
+                    int32_t tmpZ = shrink(location.z, precisionZ);
+                    int32_t tmpT = shrink(location.t, precisionT);
 
                     if (tmpX < minx) minx = tmpX;
                     if (tmpY < miny) miny = tmpY;
@@ -939,10 +919,10 @@ namespace TWKB {
             bytes_t npoints = encodeVarint(locations.size());
             append(twkb, npoints);
 
-            int xShrinked = shrink(locations.front().x, precisionXY);
-            int yShrinked = shrink(locations.front().y, precisionXY);
-            int zShrinked = shrink(locations.front().z, precisionZ);
-            int tShrinked = shrink(locations.front().t, precisionT);
+            int32_t xShrinked = shrink(locations.front().x, precisionXY);
+            int32_t yShrinked = shrink(locations.front().y, precisionXY);
+            int32_t zShrinked = shrink(locations.front().z, precisionZ);
+            int32_t tShrinked = shrink(locations.front().t, precisionT);
 
             bytes_t x = encodeVarint(encodeZigZag(xShrinked));
             bytes_t y = encodeVarint(encodeZigZag(yShrinked));
@@ -953,10 +933,10 @@ namespace TWKB {
 
             for (size_t i = 1; i < locations.size(); i++) {
 
-                int deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
-                int deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
-                int deltaZ = shrink(locations[i].z, precisionZ) - zShrinked;
-                int deltaT = shrink(locations[i].t, precisionT) - tShrinked;
+                int32_t deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
+                int32_t deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
+                int32_t deltaZ = shrink(locations[i].z, precisionZ) - zShrinked;
+                int32_t deltaT = shrink(locations[i].t, precisionT) - tShrinked;
 
                 x = encodeVarint(encodeZigZag(deltaX));
                 y = encodeVarint(encodeZigZag(deltaY));
@@ -993,23 +973,23 @@ namespace TWKB {
             // Add bounding box - if selected
             if (bbox) {
 
-                int minx = shrink(lines.front().front().x, precisionXY);
-                int maxx = minx;
-                int miny = shrink(lines.front().front().y, precisionXY);
-                int maxy = miny;
-                int minz = shrink(lines.front().front().z, precisionZ);
-                int maxz = minz;
-                int mint = shrink(lines.front().front().t, precisionT);
-                int maxt = mint;
+                int32_t minx = shrink(lines.front().front().x, precisionXY);
+                int32_t maxx = minx;
+                int32_t miny = shrink(lines.front().front().y, precisionXY);
+                int32_t maxy = miny;
+                int32_t minz = shrink(lines.front().front().z, precisionZ);
+                int32_t maxz = minz;
+                int32_t mint = shrink(lines.front().front().t, precisionT);
+                int32_t maxt = mint;
 
 
                 for (const auto &line : lines) {
 
                     for (const auto &location : line) {
-                        int tmpX = shrink(location.x, precisionXY);
-                        int tmpY = shrink(location.y, precisionXY);
-                        int tmpZ = shrink(location.z, precisionZ);
-                        int tmpT = shrink(location.t, precisionT);
+                        int32_t tmpX = shrink(location.x, precisionXY);
+                        int32_t tmpY = shrink(location.y, precisionXY);
+                        int32_t tmpZ = shrink(location.z, precisionZ);
+                        int32_t tmpT = shrink(location.t, precisionT);
 
                         if (tmpX < minx) minx = tmpX;
                         if (tmpY < miny) miny = tmpY;
@@ -1040,10 +1020,10 @@ namespace TWKB {
             append(twkb, nlines);
 
 
-            int lastXFull = 0;
-            int lastYFull = 0;
-            int lastZFull = 0;
-            int lastTFull = 0;
+            int32_t lastXFull = 0;
+            int32_t lastYFull = 0;
+            int32_t lastZFull = 0;
+            int32_t lastTFull = 0;
 
             for (size_t i = 0; i < lines.size(); i++) {
 
@@ -1056,10 +1036,10 @@ namespace TWKB {
 
                     const auto &point = points[j];
 
-                    int deltaX = shrink(point.x, precisionXY) - lastXFull;
-                    int deltaY = shrink(point.y, precisionXY) - lastYFull;
-                    int deltaZ = shrink(point.z, precisionZ) - lastZFull;
-                    int deltaT = shrink(point.t, precisionT) - lastTFull;
+                    int32_t deltaX = shrink(point.x, precisionXY) - lastXFull;
+                    int32_t deltaY = shrink(point.y, precisionXY) - lastYFull;
+                    int32_t deltaZ = shrink(point.z, precisionZ) - lastZFull;
+                    int32_t deltaT = shrink(point.t, precisionT) - lastTFull;
 
                     bytes_t x = encodeVarint(encodeZigZag(deltaX));
                     bytes_t y = encodeVarint(encodeZigZag(deltaY));
@@ -1095,20 +1075,20 @@ namespace TWKB {
             // Add bounding box - if selected
             if (bbox) {
 
-                int minx = shrink(lines.front().front().x, precisionXY);
-                int maxx = minx;
-                int miny = shrink(lines.front().front().y, precisionXY);
-                int maxy = miny;
-                int minz = shrink(lines.front().front().z, precisionZ);
-                int maxz = minz;
+                int32_t minx = shrink(lines.front().front().x, precisionXY);
+                int32_t maxx = minx;
+                int32_t miny = shrink(lines.front().front().y, precisionXY);
+                int32_t maxy = miny;
+                int32_t minz = shrink(lines.front().front().z, precisionZ);
+                int32_t maxz = minz;
 
 
                 for (const auto &line : lines) {
 
                     for (const auto &location : line) {
-                        int tmpX = shrink(location.x, precisionXY);
-                        int tmpY = shrink(location.y, precisionXY);
-                        int tmpZ = shrink(location.z, precisionZ);
+                        int32_t tmpX = shrink(location.x, precisionXY);
+                        int32_t tmpY = shrink(location.y, precisionXY);
+                        int32_t tmpZ = shrink(location.z, precisionZ);
 
                         if (tmpX < minx) minx = tmpX;
                         if (tmpY < miny) miny = tmpY;
@@ -1135,9 +1115,9 @@ namespace TWKB {
             append(twkb, nlines);
 
 
-            int lastXFull = 0;
-            int lastYFull = 0;
-            int lastZFull = 0;
+            int32_t lastXFull = 0;
+            int32_t lastYFull = 0;
+            int32_t lastZFull = 0;
 
             for (size_t i = 0; i < lines.size(); i++) {
 
@@ -1150,9 +1130,9 @@ namespace TWKB {
 
                     const auto &point = points[j];
 
-                    int deltaX = shrink(point.x, precisionXY) - lastXFull;
-                    int deltaY = shrink(point.y, precisionXY) - lastYFull;
-                    int deltaZ = shrink(point.z, precisionZ) - lastZFull;
+                    int32_t deltaX = shrink(point.x, precisionXY) - lastXFull;
+                    int32_t deltaY = shrink(point.y, precisionXY) - lastYFull;
+                    int32_t deltaZ = shrink(point.z, precisionZ) - lastZFull;
 
                     bytes_t x = encodeVarint(encodeZigZag(deltaX));
                     bytes_t y = encodeVarint(encodeZigZag(deltaY));
@@ -1183,16 +1163,16 @@ namespace TWKB {
             // Add bounding box - if selected
             if (bbox) {
 
-                int minx = shrink(lines.front().front().x, precisionXY);
-                int maxx = minx;
-                int miny = shrink(lines.front().front().y, precisionXY);
-                int maxy = miny;
+                int32_t minx = shrink(lines.front().front().x, precisionXY);
+                int32_t maxx = minx;
+                int32_t miny = shrink(lines.front().front().y, precisionXY);
+                int32_t maxy = miny;
 
                 for (const auto &line : lines) {
 
                     for (const auto &location : line) {
-                        int tmpX = shrink(location.x, precisionXY);
-                        int tmpY = shrink(location.y, precisionXY);
+                        int32_t tmpX = shrink(location.x, precisionXY);
+                        int32_t tmpY = shrink(location.y, precisionXY);
 
                         if (tmpX < minx) minx = tmpX;
                         if (tmpY < miny) miny = tmpY;
@@ -1214,8 +1194,8 @@ namespace TWKB {
             bytes_t nlines = encodeVarint(lines.size());
             append(twkb, nlines);
 
-            int lastXFull = 0;
-            int lastYFull = 0;
+            int32_t lastXFull = 0;
+            int32_t lastYFull = 0;
 
             for (size_t i = 0; i < lines.size(); i++) {
 
@@ -1228,8 +1208,8 @@ namespace TWKB {
 
                     const auto &point = points[j];
 
-                    int deltaX = shrink(point.x, precisionXY) - lastXFull;
-                    int deltaY = shrink(point.y, precisionXY) - lastYFull;
+                    int32_t deltaX = shrink(point.x, precisionXY) - lastXFull;
+                    int32_t deltaY = shrink(point.y, precisionXY) - lastYFull;
 
                     bytes_t x = encodeVarint(encodeZigZag(deltaX));
                     bytes_t y = encodeVarint(encodeZigZag(deltaY));
