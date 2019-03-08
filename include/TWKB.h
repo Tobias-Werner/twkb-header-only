@@ -40,6 +40,7 @@ namespace TWKB {
             auto &header = twkb[0];
             header |= type;
             header |= encodeZigZag(precisionXY) << 4;
+
         }
 
         void setMetadataBits(bytes_t &twkb, const bool &bbox, const bool &sizes, const bool &idlist, const bool &extendedDimensions, const bool &emptyGeom) {
@@ -65,14 +66,27 @@ namespace TWKB {
         }
 
         int32_t shrink(const double &value, const signed char &precision) {
-            return (precision >= 0) ? round(value * pow10(precision)) : round(value / pow10(-precision));
+
+            const bool negative = (precision < 0);
+            unsigned char p = (negative) ? static_cast<unsigned char>(-precision) : static_cast<unsigned char>(precision);
+
+            auto powed = pow10(p);
+
+            auto unrounded = (negative) ? powed / value : powed * value;
+
+            auto rounded = round(unrounded);
+
+            return static_cast<int32_t>(rounded);
+
         }
 
         bytes_t encode(const double &value, const signed char &precision) {
             return encodeVarint(encodeZigZag(shrink(value, precision)));
         }
 
-        void append(bytes_t &twkb) {}
+        void append(bytes_t &twkb) {
+
+        }
 
         template<typename T, typename... Types>
         void append(bytes_t &twkb, const T &var1, const Types... var2) {
@@ -82,7 +96,7 @@ namespace TWKB {
 
     public:
 
-        static int32_t pow10(unsigned char exponent) {
+        static uint32_t pow10(unsigned char exponent) {
             static uint32_t pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000};
             return pow10[exponent];
         }
@@ -99,7 +113,7 @@ namespace TWKB {
             return result;
         }
 
-        static bytes_t encodeVarint(int32_t value) {
+        static bytes_t encodeVarint(uint32_t value) {
             bytes_t result;
 
             do {
@@ -112,8 +126,8 @@ namespace TWKB {
             return result;
         }
 
-        static int32_t encodeZigZag(const int32_t &value) {
-            return (value << 1) ^ (value >> 31);
+        static uint32_t encodeZigZag(const int32_t &value) {
+            return static_cast<uint32_t >((value << 1) ^ (value >> 31));
         }
 
         static int32_t decodeZigZag(const uint32_t &value) {
@@ -140,7 +154,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makePoint(const PosXYZ &location, const signed char &precisionXY, const signed char &precisionZ) {
+        bytes_t makePoint(const PosXYZ &location, const signed char &precisionXY, const unsigned char &precisionZ) {
 
             bytes_t twkb({0x00, 0x00});
 
@@ -155,14 +169,14 @@ namespace TWKB {
 
             auto x = encode(location.x, precisionXY);
             auto y = encode(location.y, precisionXY);
-            auto z = encode(location.z, precisionZ);
+            auto z = encode(location.z, static_cast<signed char>(precisionZ));
 
             append(twkb, x, y, z);
 
             return twkb;
         }
 
-        bytes_t makePoint(const PosXYZT &location, const signed char &precisionXY, const signed char &precisionZ, const signed char &precisionT) {
+        bytes_t makePoint(const PosXYZT &location, const signed char &precisionXY, const unsigned char &precisionZ, const unsigned char &precisionT) {
 
             bytes_t twkb({0x00, 0x00});
 
@@ -177,8 +191,8 @@ namespace TWKB {
 
             auto x = encode(location.x, precisionXY);
             auto y = encode(location.y, precisionXY);
-            auto z = encode(location.z, precisionZ);
-            auto t = encode(location.t, precisionT);
+            auto z = encode(location.z, static_cast<signed char>(precisionZ));
+            auto t = encode(location.t, static_cast<signed char>(precisionT));
 
             append(twkb, x, y, z, t);
 
@@ -222,7 +236,7 @@ namespace TWKB {
             }
 
             // Set number of containing points
-            bytes_t npoints = encodeVarint(locations.size());
+            bytes_t npoints = encodeVarint(static_cast<uint32_t >(locations.size()));
 
             append(twkb, npoints);
 
@@ -252,7 +266,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeLine(const vector<PosXYZ> &locations, const signed char &precisionXY, const signed char &precisionZ, const bool &bbox) {
+        bytes_t makeLine(const vector<PosXYZ> &locations, const signed char &precisionXY, const unsigned char &precisionZ, const bool &bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -272,13 +286,13 @@ namespace TWKB {
                 int32_t maxx = minx;
                 int32_t miny = shrink(locations.front().y, precisionXY);
                 int32_t maxy = miny;
-                int32_t minz = shrink(locations.front().z, precisionZ);
+                int32_t minz = shrink(locations.front().z, static_cast<signed char>(precisionZ));
                 int32_t maxz = minz;
 
                 for (const auto &location : locations) {
                     int32_t tmpX = shrink(location.x, precisionXY);
                     int32_t tmpY = shrink(location.y, precisionXY);
-                    int32_t tmpZ = shrink(location.z, precisionZ);
+                    int32_t tmpZ = shrink(location.z, static_cast<signed char>(precisionZ));
 
                     if (tmpX < minx) minx = tmpX;
                     if (tmpY < miny) miny = tmpY;
@@ -301,12 +315,12 @@ namespace TWKB {
 
 
             // Set number of containing points
-            bytes_t npoints = encodeVarint(locations.size());
+            bytes_t npoints = encodeVarint(static_cast<uint32_t >(locations.size()));
             twkb.insert(twkb.end(), npoints.begin(), npoints.end());
 
             int32_t xShrinked = shrink(locations.front().x, precisionXY);
             int32_t yShrinked = shrink(locations.front().y, precisionXY);
-            int32_t zShrinked = shrink(locations.front().z, precisionZ);
+            int32_t zShrinked = shrink(locations.front().z, static_cast<signed char>(precisionZ));
 
             bytes_t x = encodeVarint(encodeZigZag(xShrinked));
             bytes_t y = encodeVarint(encodeZigZag(yShrinked));
@@ -318,7 +332,7 @@ namespace TWKB {
 
                 int32_t deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
                 int32_t deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
-                int32_t deltaZ = shrink(locations[i].z, precisionZ) - zShrinked;
+                int32_t deltaZ = shrink(locations[i].z, static_cast<signed char>(precisionZ)) - zShrinked;
 
                 x = encodeVarint(encodeZigZag(deltaX));
                 y = encodeVarint(encodeZigZag(deltaY));
@@ -328,14 +342,14 @@ namespace TWKB {
 
                 xShrinked = shrink(locations[i].x, precisionXY);
                 yShrinked = shrink(locations[i].y, precisionXY);
-                zShrinked = shrink(locations[i].z, precisionZ);
+                zShrinked = shrink(locations[i].z, static_cast<signed char>(precisionZ));
 
             }
 
             return twkb;
         }
 
-        bytes_t makeLine(const vector<PosXYZT> &locations, const signed char &precisionXY, const signed char &precisionZ, const signed char &precisionT, const bool &bbox) {
+        bytes_t makeLine(const vector<PosXYZT> &locations, const signed char &precisionXY, const unsigned char &precisionZ, const unsigned char &precisionT, const bool &bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -355,16 +369,16 @@ namespace TWKB {
                 int32_t maxx = minx;
                 int32_t miny = shrink(locations.front().y, precisionXY);
                 int32_t maxy = miny;
-                int32_t minz = shrink(locations.front().z, precisionZ);
+                int32_t minz = shrink(locations.front().z, static_cast<signed char>(precisionZ));
                 int32_t maxz = minz;
-                int32_t mint = shrink(locations.front().t, precisionT);
+                int32_t mint = shrink(locations.front().t, static_cast<signed char>(precisionT));
                 int32_t maxt = mint;
 
                 for (const auto &location : locations) {
                     int32_t tmpX = shrink(location.x, precisionXY);
                     int32_t tmpY = shrink(location.y, precisionXY);
-                    int32_t tmpZ = shrink(location.z, precisionZ);
-                    int32_t tmpT = shrink(location.t, precisionT);
+                    int32_t tmpZ = shrink(location.z, static_cast<signed char>(precisionZ));
+                    int32_t tmpT = shrink(location.t, static_cast<signed char>(precisionT));
 
                     if (tmpX < minx) minx = tmpX;
                     if (tmpY < miny) miny = tmpY;
@@ -391,13 +405,13 @@ namespace TWKB {
 
 
             // Set number of containing points
-            bytes_t npoints = encodeVarint(locations.size());
+            bytes_t npoints = encodeVarint(static_cast<uint32_t >(locations.size()));
             twkb.insert(twkb.end(), npoints.begin(), npoints.end());
 
             int32_t xShrinked = shrink(locations.front().x, precisionXY);
             int32_t yShrinked = shrink(locations.front().y, precisionXY);
-            int32_t zShrinked = shrink(locations.front().z, precisionZ);
-            int32_t tShrinked = shrink(locations.front().t, precisionT);
+            int32_t zShrinked = shrink(locations.front().z, static_cast<signed char>(precisionZ));
+            int32_t tShrinked = shrink(locations.front().t, static_cast<signed char>(precisionT));
 
             bytes_t x = encodeVarint(encodeZigZag(xShrinked));
             bytes_t y = encodeVarint(encodeZigZag(yShrinked));
@@ -410,8 +424,8 @@ namespace TWKB {
 
                 int32_t deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
                 int32_t deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
-                int32_t deltaZ = shrink(locations[i].z, precisionZ) - zShrinked;
-                int32_t deltaT = shrink(locations[i].t, precisionT) - tShrinked;
+                int32_t deltaZ = shrink(locations[i].z, static_cast<signed char>(precisionZ)) - zShrinked;
+                int32_t deltaT = shrink(locations[i].t, static_cast<signed char>(precisionT)) - tShrinked;
 
                 x = encodeVarint(encodeZigZag(deltaX));
                 y = encodeVarint(encodeZigZag(deltaY));
@@ -422,8 +436,8 @@ namespace TWKB {
 
                 xShrinked = shrink(locations[i].x, precisionXY);
                 yShrinked = shrink(locations[i].y, precisionXY);
-                zShrinked = shrink(locations[i].z, precisionZ);
-                tShrinked = shrink(locations[i].t, precisionT);
+                zShrinked = shrink(locations[i].z, static_cast<signed char>(precisionZ));
+                tShrinked = shrink(locations[i].t, static_cast<signed char>(precisionT));
 
             }
 
@@ -473,7 +487,7 @@ namespace TWKB {
 
 
             // Insert number of containing rings
-            bytes_t nrings = encodeVarint(rings.size());
+            bytes_t nrings = encodeVarint(static_cast<uint32_t >(rings.size()));
             append(twkb, nrings);
 
             int32_t lastXFull = 0;
@@ -483,7 +497,7 @@ namespace TWKB {
                 auto &pointsInRing = rings[i];
 
                 // Set number of containing pointsInRing
-                bytes_t npoints = encodeVarint(pointsInRing.size());
+                bytes_t npoints = encodeVarint(static_cast<uint32_t >(pointsInRing.size()));
                 append(twkb, npoints);
 
                 for (size_t j = 0; j < pointsInRing.size(); j++) {
@@ -509,7 +523,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makePolygon(const vector<vector<PosXYZ>> &rings, const signed char &precisionXY, const signed char &precisionZ, const bool &bbox) {
+        bytes_t makePolygon(const vector<vector<PosXYZ>> &rings, const signed char &precisionXY, const unsigned char &precisionZ, const bool &bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -527,7 +541,7 @@ namespace TWKB {
                 int32_t maxx = minx;
                 int32_t miny = shrink(rings.front().front().y, precisionXY);
                 int32_t maxy = miny;
-                int32_t minz = shrink(rings.front().front().z, precisionZ);
+                int32_t minz = shrink(rings.front().front().z, static_cast<signed char>(precisionZ));
                 int32_t maxz = minz;
 
                 for (const auto &ring : rings) {
@@ -535,7 +549,7 @@ namespace TWKB {
                     for (const auto &location : ring) {
                         int32_t tmpX = shrink(location.x, precisionXY);
                         int32_t tmpY = shrink(location.y, precisionXY);
-                        int32_t tmpZ = shrink(location.z, precisionZ);
+                        int32_t tmpZ = shrink(location.z, static_cast<signed char>(precisionZ));
 
                         if (tmpX < minx) minx = tmpX;
                         if (tmpY < miny) miny = tmpY;
@@ -559,7 +573,7 @@ namespace TWKB {
             }
 
             // Insert number of containing rings
-            bytes_t nrings = encodeVarint(rings.size());
+            bytes_t nrings = encodeVarint(static_cast<uint32_t>(rings.size()));
             append(twkb, nrings);
 
             int32_t lastXFull = 0;
@@ -570,14 +584,14 @@ namespace TWKB {
                 const auto &pointsInRing = rings[i];
 
                 // Set number of containing pointsInRing
-                bytes_t npoints = encodeVarint(pointsInRing.size());
+                bytes_t npoints = encodeVarint(static_cast<uint32_t >(pointsInRing.size()));
                 append(twkb, npoints);
 
                 for (size_t j = 0; j < pointsInRing.size(); j++) {
 
                     int32_t currentXFull = shrink(pointsInRing[j].x, precisionXY);
                     int32_t currentYFull = shrink(pointsInRing[j].y, precisionXY);
-                    int32_t currentZFull = shrink(pointsInRing[j].z, precisionZ);
+                    int32_t currentZFull = shrink(pointsInRing[j].z, static_cast<signed char>(precisionZ));
 
                     int32_t deltaX = currentXFull - lastXFull;
                     int32_t deltaY = currentYFull - lastYFull;
@@ -600,7 +614,8 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makePolygon(const vector<vector<PosXYZT>> &rings, const signed char &precisionXY, const signed char &precisionZ, const signed char &precisionT, const bool &bbox) {
+        bytes_t
+        makePolygon(const vector<vector<PosXYZT>> &rings, const signed char &precisionXY, const unsigned char &precisionZ, const unsigned char &precisionT, const bool &bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -618,9 +633,9 @@ namespace TWKB {
                 int32_t maxx = minx;
                 int32_t miny = shrink(rings.front().front().y, precisionXY);
                 int32_t maxy = miny;
-                int32_t minz = shrink(rings.front().front().z, precisionZ);
+                int32_t minz = shrink(rings.front().front().z, static_cast<signed char>(precisionZ));
                 int32_t maxz = minz;
-                int32_t mint = shrink(rings.front().front().t, precisionT);
+                int32_t mint = shrink(rings.front().front().t, static_cast<signed char>(precisionT));
                 int32_t maxt = mint;
 
                 for (const auto &ring : rings) {
@@ -628,8 +643,8 @@ namespace TWKB {
                     for (const auto &location : ring) {
                         int32_t tmpX = shrink(location.x, precisionXY);
                         int32_t tmpY = shrink(location.y, precisionXY);
-                        int32_t tmpZ = shrink(location.z, precisionZ);
-                        int32_t tmpT = shrink(location.t, precisionT);
+                        int32_t tmpZ = shrink(location.z, static_cast<signed char>(precisionZ));
+                        int32_t tmpT = shrink(location.t, static_cast<signed char>(precisionT));
 
                         if (tmpX < minx) minx = tmpX;
                         if (tmpY < miny) miny = tmpY;
@@ -657,7 +672,7 @@ namespace TWKB {
             }
 
             // Insert number of containing rings
-            bytes_t nrings = encodeVarint(rings.size());
+            bytes_t nrings = encodeVarint(static_cast<uint32_t >(rings.size()));
             append(twkb, nrings);
 
 
@@ -670,15 +685,15 @@ namespace TWKB {
                 auto &pointsInRing = rings[i];
 
                 // Set number of containing pointsInRing
-                bytes_t npoints = encodeVarint(pointsInRing.size());
+                bytes_t npoints = encodeVarint(static_cast<uint32_t >(pointsInRing.size()));
                 append(twkb, npoints);
 
                 for (size_t j = 0; j < pointsInRing.size(); j++) {
 
                     int32_t currentXFull = shrink(pointsInRing[j].x, precisionXY);
                     int32_t currentYFull = shrink(pointsInRing[j].y, precisionXY);
-                    int32_t currentZFull = shrink(pointsInRing[j].z, precisionZ);
-                    int32_t currentTFull = shrink(pointsInRing[j].t, precisionT);
+                    int32_t currentZFull = shrink(pointsInRing[j].z, static_cast<signed char>(precisionZ));
+                    int32_t currentTFull = shrink(pointsInRing[j].t, static_cast<signed char>(precisionT));
 
                     int32_t deltaX = currentXFull - lastXFull;
                     int32_t deltaY = currentYFull - lastYFull;
@@ -745,7 +760,7 @@ namespace TWKB {
             }
 
             // Set number of containing points
-            bytes_t npoints = encodeVarint(locations.size());
+            bytes_t npoints = encodeVarint(static_cast<uint32_t >(locations.size()));
             append(twkb, npoints);
 
             int32_t xShrinked = shrink(locations.front().x, precisionXY);
@@ -775,7 +790,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiPoint(const vector<PosXYZ> &locations, const signed char &precisionXY, const signed char &precisionZ, const bool &bbox) {
+        bytes_t makeMultiPoint(const vector<PosXYZ> &locations, const signed char &precisionXY, const unsigned char &precisionZ, const bool &bbox) {
 
             bytes_t twkb({0x00, 0x00});
 
@@ -794,14 +809,14 @@ namespace TWKB {
                 int32_t maxx = minx;
                 int32_t miny = shrink(locations.front().y, precisionXY);
                 int32_t maxy = miny;
-                int32_t minz = shrink(locations.front().z, precisionZ);
+                int32_t minz = shrink(locations.front().z, static_cast<signed char>(precisionZ));
                 int32_t maxz = minz;
 
                 for (const auto &location : locations) {
 
                     int32_t tmpX = shrink(location.x, precisionXY);
                     int32_t tmpY = shrink(location.y, precisionXY);
-                    int32_t tmpZ = shrink(location.z, precisionZ);
+                    int32_t tmpZ = shrink(location.z, static_cast<signed char>(precisionZ));
 
                     if (tmpX < minx) minx = tmpX;
                     if (tmpY < miny) miny = tmpY;
@@ -825,12 +840,12 @@ namespace TWKB {
             }
 
             // Set number of containing points
-            bytes_t npoints = encodeVarint(locations.size());
+            bytes_t npoints = encodeVarint(static_cast<uint32_t >(locations.size()));
             append(twkb, npoints);
 
             int32_t xShrinked = shrink(locations.front().x, precisionXY);
             int32_t yShrinked = shrink(locations.front().y, precisionXY);
-            int32_t zShrinked = shrink(locations.front().z, precisionZ);
+            int32_t zShrinked = shrink(locations.front().z, static_cast<signed char>(precisionZ));
 
             bytes_t x = encodeVarint(encodeZigZag(xShrinked));
             bytes_t y = encodeVarint(encodeZigZag(yShrinked));
@@ -842,7 +857,7 @@ namespace TWKB {
 
                 int32_t deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
                 int32_t deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
-                int32_t deltaZ = shrink(locations[i].z, precisionZ) - zShrinked;
+                int32_t deltaZ = shrink(locations[i].z, static_cast<signed char>(precisionZ)) - zShrinked;
 
                 x = encodeVarint(encodeZigZag(deltaX));
                 y = encodeVarint(encodeZigZag(deltaY));
@@ -852,7 +867,7 @@ namespace TWKB {
 
                 xShrinked = shrink(locations[i].x, precisionXY);
                 yShrinked = shrink(locations[i].y, precisionXY);
-                zShrinked = shrink(locations[i].z, precisionZ);
+                zShrinked = shrink(locations[i].z, static_cast<signed char>(precisionZ));
 
             }
 
@@ -860,7 +875,8 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiPoint(const vector<PosXYZT> &locations, const signed char &precisionXY, const signed char &precisionZ, const signed char &precisionT, const bool &bbox) {
+        bytes_t
+        makeMultiPoint(const vector<PosXYZT> &locations, const signed char &precisionXY, const unsigned char &precisionZ, const unsigned char &precisionT, const bool &bbox) {
 
             bytes_t twkb({0x00, 0x00});
 
@@ -879,17 +895,17 @@ namespace TWKB {
                 int32_t maxx = minx;
                 int32_t miny = shrink(locations.front().y, precisionXY);
                 int32_t maxy = miny;
-                int32_t minz = shrink(locations.front().z, precisionZ);
+                int32_t minz = shrink(locations.front().z, static_cast<signed char>(precisionZ));
                 int32_t maxz = minz;
-                int32_t mint = shrink(locations.front().t, precisionT);
+                int32_t mint = shrink(locations.front().t, static_cast<signed char>(precisionT));
                 int32_t maxt = mint;
 
                 for (const auto &location : locations) {
 
                     int32_t tmpX = shrink(location.x, precisionXY);
                     int32_t tmpY = shrink(location.y, precisionXY);
-                    int32_t tmpZ = shrink(location.z, precisionZ);
-                    int32_t tmpT = shrink(location.t, precisionT);
+                    int32_t tmpZ = shrink(location.z, static_cast<signed char>(precisionZ));
+                    int32_t tmpT = shrink(location.t, static_cast<signed char>(precisionT));
 
                     if (tmpX < minx) minx = tmpX;
                     if (tmpY < miny) miny = tmpY;
@@ -916,13 +932,13 @@ namespace TWKB {
             }
 
             // Set number of containing points
-            bytes_t npoints = encodeVarint(locations.size());
+            bytes_t npoints = encodeVarint(static_cast<uint32_t >(locations.size()));
             append(twkb, npoints);
 
             int32_t xShrinked = shrink(locations.front().x, precisionXY);
             int32_t yShrinked = shrink(locations.front().y, precisionXY);
-            int32_t zShrinked = shrink(locations.front().z, precisionZ);
-            int32_t tShrinked = shrink(locations.front().t, precisionT);
+            int32_t zShrinked = shrink(locations.front().z, static_cast<signed char>(precisionZ));
+            int32_t tShrinked = shrink(locations.front().t, static_cast<signed char>(precisionT));
 
             bytes_t x = encodeVarint(encodeZigZag(xShrinked));
             bytes_t y = encodeVarint(encodeZigZag(yShrinked));
@@ -935,8 +951,8 @@ namespace TWKB {
 
                 int32_t deltaX = shrink(locations[i].x, precisionXY) - xShrinked;
                 int32_t deltaY = shrink(locations[i].y, precisionXY) - yShrinked;
-                int32_t deltaZ = shrink(locations[i].z, precisionZ) - zShrinked;
-                int32_t deltaT = shrink(locations[i].t, precisionT) - tShrinked;
+                int32_t deltaZ = shrink(locations[i].z, static_cast<signed char>(precisionZ)) - zShrinked;
+                int32_t deltaT = shrink(locations[i].t, static_cast<signed char>(precisionT)) - tShrinked;
 
                 x = encodeVarint(encodeZigZag(deltaX));
                 y = encodeVarint(encodeZigZag(deltaY));
@@ -947,8 +963,8 @@ namespace TWKB {
 
                 xShrinked = shrink(locations[i].x, precisionXY);
                 yShrinked = shrink(locations[i].y, precisionXY);
-                zShrinked = shrink(locations[i].z, precisionZ);
-                tShrinked = shrink(locations[i].t, precisionT);
+                zShrinked = shrink(locations[i].z, static_cast<signed char>(precisionZ));
+                tShrinked = shrink(locations[i].t, static_cast<signed char>(precisionT));
 
             }
 
@@ -957,7 +973,7 @@ namespace TWKB {
         }
 
         bytes_t
-        makeMultiLine(const vector<vector<PosXYZT>> &lines, const signed char &precisionXY, const signed char &precisionZ, const signed char &precisionT, const bool &bbox) {
+        makeMultiLine(const vector<vector<PosXYZT>> &lines, const signed char &precisionXY, const unsigned char &precisionZ, const unsigned char &precisionT, const bool &bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -977,9 +993,9 @@ namespace TWKB {
                 int32_t maxx = minx;
                 int32_t miny = shrink(lines.front().front().y, precisionXY);
                 int32_t maxy = miny;
-                int32_t minz = shrink(lines.front().front().z, precisionZ);
+                int32_t minz = shrink(lines.front().front().z, static_cast<signed char>(precisionZ));
                 int32_t maxz = minz;
-                int32_t mint = shrink(lines.front().front().t, precisionT);
+                int32_t mint = shrink(lines.front().front().t, static_cast<signed char>(precisionT));
                 int32_t maxt = mint;
 
 
@@ -988,8 +1004,8 @@ namespace TWKB {
                     for (const auto &location : line) {
                         int32_t tmpX = shrink(location.x, precisionXY);
                         int32_t tmpY = shrink(location.y, precisionXY);
-                        int32_t tmpZ = shrink(location.z, precisionZ);
-                        int32_t tmpT = shrink(location.t, precisionT);
+                        int32_t tmpZ = shrink(location.z, static_cast<signed char>(precisionZ));
+                        int32_t tmpT = shrink(location.t, static_cast<signed char>(precisionT));
 
                         if (tmpX < minx) minx = tmpX;
                         if (tmpY < miny) miny = tmpY;
@@ -1016,7 +1032,7 @@ namespace TWKB {
             }
 
             // Set number of containing points
-            bytes_t nlines = encodeVarint(lines.size());
+            bytes_t nlines = encodeVarint(static_cast<uint32_t >(lines.size()));
             append(twkb, nlines);
 
 
@@ -1029,7 +1045,7 @@ namespace TWKB {
 
                 const auto &points = lines[i];
 
-                bytes_t npoints = encodeVarint(points.size());
+                bytes_t npoints = encodeVarint(static_cast<uint32_t >(points.size()));
                 append(twkb, npoints);
 
                 for (size_t j = 0; j < points.size(); j++) {
@@ -1038,8 +1054,8 @@ namespace TWKB {
 
                     int32_t deltaX = shrink(point.x, precisionXY) - lastXFull;
                     int32_t deltaY = shrink(point.y, precisionXY) - lastYFull;
-                    int32_t deltaZ = shrink(point.z, precisionZ) - lastZFull;
-                    int32_t deltaT = shrink(point.t, precisionT) - lastTFull;
+                    int32_t deltaZ = shrink(point.z, static_cast<signed char>(precisionZ)) - lastZFull;
+                    int32_t deltaT = shrink(point.t, static_cast<signed char>(precisionT)) - lastTFull;
 
                     bytes_t x = encodeVarint(encodeZigZag(deltaX));
                     bytes_t y = encodeVarint(encodeZigZag(deltaY));
@@ -1050,8 +1066,8 @@ namespace TWKB {
 
                     lastXFull = shrink(point.x, precisionXY);
                     lastYFull = shrink(point.y, precisionXY);
-                    lastZFull = shrink(point.z, precisionZ);
-                    lastTFull = shrink(point.t, precisionT);
+                    lastZFull = shrink(point.z, static_cast<signed char>(precisionZ));
+                    lastTFull = shrink(point.t, static_cast<signed char>(precisionT));
 
                 }
             }
@@ -1059,7 +1075,7 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiLine(const vector<vector<PosXYZ>> &lines, const signed char &precisionXY, const signed char &precisionZ, const bool &bbox) {
+        bytes_t makeMultiLine(const vector<vector<PosXYZ>> &lines, const signed char &precisionXY, const unsigned char &precisionZ, const bool &bbox) {
             bytes_t twkb({0x00, 0x00});
 
             // Set type and precision
@@ -1079,7 +1095,7 @@ namespace TWKB {
                 int32_t maxx = minx;
                 int32_t miny = shrink(lines.front().front().y, precisionXY);
                 int32_t maxy = miny;
-                int32_t minz = shrink(lines.front().front().z, precisionZ);
+                int32_t minz = shrink(lines.front().front().z, static_cast<signed char>(precisionZ));
                 int32_t maxz = minz;
 
 
@@ -1088,7 +1104,7 @@ namespace TWKB {
                     for (const auto &location : line) {
                         int32_t tmpX = shrink(location.x, precisionXY);
                         int32_t tmpY = shrink(location.y, precisionXY);
-                        int32_t tmpZ = shrink(location.z, precisionZ);
+                        int32_t tmpZ = shrink(location.z, static_cast<signed char>(precisionZ));
 
                         if (tmpX < minx) minx = tmpX;
                         if (tmpY < miny) miny = tmpY;
@@ -1111,7 +1127,7 @@ namespace TWKB {
             }
 
             // Set number of containing points
-            bytes_t nlines = encodeVarint(lines.size());
+            bytes_t nlines = encodeVarint(static_cast<uint32_t >(lines.size()));
             append(twkb, nlines);
 
 
@@ -1123,7 +1139,7 @@ namespace TWKB {
 
                 const auto &points = lines[i];
 
-                bytes_t npoints = encodeVarint(points.size());
+                bytes_t npoints = encodeVarint(static_cast<uint32_t>(points.size()));
                 append(twkb, npoints);
 
                 for (size_t j = 0; j < points.size(); j++) {
@@ -1132,7 +1148,7 @@ namespace TWKB {
 
                     int32_t deltaX = shrink(point.x, precisionXY) - lastXFull;
                     int32_t deltaY = shrink(point.y, precisionXY) - lastYFull;
-                    int32_t deltaZ = shrink(point.z, precisionZ) - lastZFull;
+                    int32_t deltaZ = shrink(point.z, static_cast<signed char>(precisionZ)) - lastZFull;
 
                     bytes_t x = encodeVarint(encodeZigZag(deltaX));
                     bytes_t y = encodeVarint(encodeZigZag(deltaY));
@@ -1142,7 +1158,7 @@ namespace TWKB {
 
                     lastXFull = shrink(point.x, precisionXY);
                     lastYFull = shrink(point.y, precisionXY);
-                    lastZFull = shrink(point.z, precisionZ);
+                    lastZFull = shrink(point.z, static_cast<signed char>(precisionZ));
 
                 }
             }
@@ -1191,7 +1207,7 @@ namespace TWKB {
             }
 
             // Set number of containing points
-            bytes_t nlines = encodeVarint(lines.size());
+            bytes_t nlines = encodeVarint(static_cast<uint32_t >(lines.size()));
             append(twkb, nlines);
 
             int32_t lastXFull = 0;
@@ -1201,7 +1217,7 @@ namespace TWKB {
 
                 const auto &points = lines[i];
 
-                bytes_t npoints = encodeVarint(points.size());
+                bytes_t npoints = encodeVarint(static_cast<uint32_t >(points.size()));
                 append(twkb, npoints);
 
                 for (size_t j = 0; j < points.size(); j++) {

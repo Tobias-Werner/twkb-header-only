@@ -18,7 +18,7 @@ TEST_CASE("Binary encoding") {
 
     SECTION("Varint encoding") {
 
-        vector<unsigned int> testValues({0, 300, 12434, 324345345});
+        vector<uint32_t> testValues({0, 300, 12434, 324345345});
 
         for (auto &testValue : testValues) {
             bytes_t bytes = GeomFactory::encodeVarint(testValue);
