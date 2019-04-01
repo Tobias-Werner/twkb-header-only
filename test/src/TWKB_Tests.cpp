@@ -45,7 +45,7 @@ TEST_CASE("Creating point geometries") {
 
         GeomFactory factory;
 
-        PosXY pos(7.625752, 53.942254);
+        LocationXY pos(7.625752, 53.942254);
         bytes_t twkb = factory.makePoint(pos, 6);
 
         // SELECT ST_AsTWKB('POINT(7.625752 53.942254)'::geometry, 6) as binary;
@@ -59,7 +59,7 @@ TEST_CASE("Creating point geometries") {
 
         GeomFactory factory;
 
-        PosXYZ pos(7.625752, 53.942254, 10.175);
+        LocationXYZ pos(7.625752, 53.942254, 10.175);
         bytes_t twkb = factory.makePoint(pos, 6, 3);
 
         // SELECT ST_AsTWKB('POINT(7.625752 53.942254 10.175)'::geometry, 6, 3) as binary;
@@ -72,7 +72,7 @@ TEST_CASE("Creating point geometries") {
 
         GeomFactory factory;
 
-        PosXYZT pos(7.625752, 53.942254, 10.175, 164.0);
+        LocationXYZT pos(7.625752, 53.942254, 10.175, 164.0);
         bytes_t twkb = factory.makePoint(pos, 6, 3, 0);
 
         // SELECT ST_AsTWKB('POINT(7.625752 53.942254 10.175 164.0)'::geometry, 6, 3, 0) as binary;
@@ -87,11 +87,11 @@ TEST_CASE("Creating line geometries") {
     SECTION("Creating line XY") {
         GeomFactory factory;
 
-        PosXY pos1(7.625752, 53.942254);
-        PosXY pos2(7.615752, 53.932254);
-        PosXY pos3(7.532752, 53.915354);
+        LocationXY pos1(7.625752, 53.942254);
+        LocationXY pos2(7.615752, 53.932254);
+        LocationXY pos3(7.532752, 53.915354);
 
-        vector<PosXY> locations({pos1, pos2, pos3});
+        vector<LocationXY> locations({pos1, pos2, pos3});
 
         bytes_t twkb = factory.makeLine(locations, 6, false);
 
@@ -105,11 +105,11 @@ TEST_CASE("Creating line geometries") {
     SECTION("Creating line XY - with bbox") {
         GeomFactory factory;
 
-        PosXY pos1(7.625752, 53.942254);
-        PosXY pos2(7.615752, 53.932254);
-        PosXY pos3(7.532752, 53.915354);
+        LocationXY pos1(7.625752, 53.942254);
+        LocationXY pos2(7.615752, 53.932254);
+        LocationXY pos3(7.532752, 53.915354);
 
-        vector<PosXY> locations({pos1, pos2, pos3});
+        vector<LocationXY> locations({pos1, pos2, pos3});
 
         bytes_t twkb = factory.makeLine(locations, 6, true);
 
@@ -125,11 +125,11 @@ TEST_CASE("Creating line geometries") {
     SECTION("Creating line XYZ") {
         GeomFactory factory;
 
-        PosXYZ pos1(7.625752, 53.942254, 10.175);
-        PosXYZ pos2(7.615752, 53.932254, 10.231);
-        PosXYZ pos3(7.532752, 53.915354, 10.335);
+        LocationXYZ pos1(7.625752, 53.942254, 10.175);
+        LocationXYZ pos2(7.615752, 53.932254, 10.231);
+        LocationXYZ pos3(7.532752, 53.915354, 10.335);
 
-        vector<PosXYZ> locations({pos1, pos2, pos3});
+        vector<LocationXYZ> locations({pos1, pos2, pos3});
 
         bytes_t twkb = factory.makeLine(locations, 6, 3, false);
 
@@ -145,11 +145,11 @@ TEST_CASE("Creating line geometries") {
     SECTION("Creating line XYZ - with bbox") {
         GeomFactory factory;
 
-        PosXYZ pos1(7.625752, 53.942254, 10.175);
-        PosXYZ pos2(7.615752, 53.932254, 10.231);
-        PosXYZ pos3(7.532752, 53.915354, 10.335);
+        LocationXYZ pos1(7.625752, 53.942254, 10.175);
+        LocationXYZ pos2(7.615752, 53.932254, 10.231);
+        LocationXYZ pos3(7.532752, 53.915354, 10.335);
 
-        vector<PosXYZ> locations({pos1, pos2, pos3});
+        vector<LocationXYZ> locations({pos1, pos2, pos3});
 
         bytes_t twkb = factory.makeLine(locations, 6, 3, true);
 
@@ -165,11 +165,11 @@ TEST_CASE("Creating line geometries") {
     SECTION("Creating line XYZT") {
         GeomFactory factory;
 
-        PosXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
-        PosXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
-        PosXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
+        LocationXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
+        LocationXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
+        LocationXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
 
-        vector<PosXYZT> locations({pos1, pos2, pos3});
+        vector<LocationXYZT> locations({pos1, pos2, pos3});
 
         bytes_t twkb = factory.makeLine(locations, 6, 3, 0, false);
 
@@ -185,11 +185,11 @@ TEST_CASE("Creating line geometries") {
     SECTION("Creating line XYZT - with bbox") {
         GeomFactory factory;
 
-        PosXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
-        PosXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
-        PosXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
+        LocationXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
+        LocationXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
+        LocationXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
 
-        vector<PosXYZT> locations({pos1, pos2, pos3});
+        vector<LocationXYZT> locations({pos1, pos2, pos3});
 
         bytes_t twkb = factory.makeLine(locations, 6, 3, 0, true);
 
@@ -209,18 +209,18 @@ TEST_CASE("Creating polygon geometries") {
     SECTION("Creating polygon XY") {
         GeomFactory factory;
 
-        PosXY pos1(7.625752, 53.942254);
-        PosXY pos2(7.615752, 53.932254);
-        PosXY pos3(7.532752, 53.915354);
+        LocationXY pos1(7.625752, 53.942254);
+        LocationXY pos2(7.615752, 53.932254);
+        LocationXY pos3(7.532752, 53.915354);
 
-        vector<PosXY> exteriorRing({pos1, pos2, pos3, pos1});
-        vector<vector<PosXY>> polygon({exteriorRing});
+        vector<LocationXY> exteriorRing({pos1, pos2, pos3, pos1});
+        vector<vector<LocationXY>> polygon({exteriorRing});
 
-        PosXY pos4(7.60679, 53.93277);
-        PosXY pos5(7.61170, 53.93686);
-        PosXY pos6(7.61577, 53.93547);
+        LocationXY pos4(7.60679, 53.93277);
+        LocationXY pos5(7.61170, 53.93686);
+        LocationXY pos6(7.61577, 53.93547);
 
-        vector<PosXY> interiorRing({pos4, pos5, pos6, pos4});
+        vector<LocationXY> interiorRing({pos4, pos5, pos6, pos4});
         polygon.push_back(interiorRing);
 
         bytes_t twkb = factory.makePolygon(polygon, 6, false);
@@ -239,18 +239,18 @@ TEST_CASE("Creating polygon geometries") {
     SECTION("Creating polygon XY - with bbox") {
         GeomFactory factory;
 
-        PosXY pos1(7.625752, 53.942254);
-        PosXY pos2(7.615752, 53.932254);
-        PosXY pos3(7.532752, 53.915354);
+        LocationXY pos1(7.625752, 53.942254);
+        LocationXY pos2(7.615752, 53.932254);
+        LocationXY pos3(7.532752, 53.915354);
 
-        vector<PosXY> exteriorRing({pos1, pos2, pos3, pos1});
-        vector<vector<PosXY>> polygon({exteriorRing});
+        vector<LocationXY> exteriorRing({pos1, pos2, pos3, pos1});
+        vector<vector<LocationXY>> polygon({exteriorRing});
 
-        PosXY pos4(7.60679, 53.93277);
-        PosXY pos5(7.61170, 53.93686);
-        PosXY pos6(7.61577, 53.93547);
+        LocationXY pos4(7.60679, 53.93277);
+        LocationXY pos5(7.61170, 53.93686);
+        LocationXY pos6(7.61577, 53.93547);
 
-        vector<PosXY> interiorRing({pos4, pos5, pos6, pos4});
+        vector<LocationXY> interiorRing({pos4, pos5, pos6, pos4});
         polygon.push_back(interiorRing);
 
         bytes_t twkb = factory.makePolygon(polygon, 6, true);
@@ -271,18 +271,18 @@ TEST_CASE("Creating polygon geometries") {
         GeomFactory factory;
 
 
-        PosXYZ pos1(7.625752, 53.942254, 10.175);
-        PosXYZ pos2(7.615752, 53.932254, 10.231);
-        PosXYZ pos3(7.532752, 53.915354, 10.335);
+        LocationXYZ pos1(7.625752, 53.942254, 10.175);
+        LocationXYZ pos2(7.615752, 53.932254, 10.231);
+        LocationXYZ pos3(7.532752, 53.915354, 10.335);
 
-        vector<PosXYZ> exteriorRing({pos1, pos2, pos3, pos1});
-        vector<vector<PosXYZ>> polygon({exteriorRing});
+        vector<LocationXYZ> exteriorRing({pos1, pos2, pos3, pos1});
+        vector<vector<LocationXYZ>> polygon({exteriorRing});
 
-        PosXYZ pos4(7.60679, 53.93277, 10.155);
-        PosXYZ pos5(7.61170, 53.93686, 10.158);
-        PosXYZ pos6(7.61577, 53.93547, 10.651);
+        LocationXYZ pos4(7.60679, 53.93277, 10.155);
+        LocationXYZ pos5(7.61170, 53.93686, 10.158);
+        LocationXYZ pos6(7.61577, 53.93547, 10.651);
 
-        vector<PosXYZ> interiorRing({pos4, pos5, pos6, pos4});
+        vector<LocationXYZ> interiorRing({pos4, pos5, pos6, pos4});
         polygon.push_back(interiorRing);
 
         bytes_t twkb = factory.makePolygon(polygon, 6, 3, false);
@@ -302,18 +302,18 @@ TEST_CASE("Creating polygon geometries") {
     SECTION("Creating polygon XYZ - with bbox") {
         GeomFactory factory;
 
-        PosXYZ pos1(7.625752, 53.942254, 10.175);
-        PosXYZ pos2(7.615752, 53.932254, 10.231);
-        PosXYZ pos3(7.532752, 53.915354, 10.335);
+        LocationXYZ pos1(7.625752, 53.942254, 10.175);
+        LocationXYZ pos2(7.615752, 53.932254, 10.231);
+        LocationXYZ pos3(7.532752, 53.915354, 10.335);
 
-        vector<PosXYZ> exteriorRing({pos1, pos2, pos3, pos1});
-        vector<vector<PosXYZ>> polygon({exteriorRing});
+        vector<LocationXYZ> exteriorRing({pos1, pos2, pos3, pos1});
+        vector<vector<LocationXYZ>> polygon({exteriorRing});
 
-        PosXYZ pos4(7.60679, 53.93277, 10.155);
-        PosXYZ pos5(7.61170, 53.93686, 10.158);
-        PosXYZ pos6(7.61577, 53.93547, 10.651);
+        LocationXYZ pos4(7.60679, 53.93277, 10.155);
+        LocationXYZ pos5(7.61170, 53.93686, 10.158);
+        LocationXYZ pos6(7.61577, 53.93547, 10.651);
 
-        vector<PosXYZ> interiorRing({pos4, pos5, pos6, pos4});
+        vector<LocationXYZ> interiorRing({pos4, pos5, pos6, pos4});
         polygon.push_back(interiorRing);
 
         bytes_t twkb = factory.makePolygon(polygon, 6, 3, true);
@@ -335,18 +335,18 @@ TEST_CASE("Creating polygon geometries") {
         GeomFactory factory;
 
 
-        PosXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
-        PosXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
-        PosXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
+        LocationXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
+        LocationXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
+        LocationXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
 
-        vector<PosXYZT> exteriorRing({pos1, pos2, pos3, pos1});
-        vector<vector<PosXYZT>> polygon({exteriorRing});
+        vector<LocationXYZT> exteriorRing({pos1, pos2, pos3, pos1});
+        vector<vector<LocationXYZT>> polygon({exteriorRing});
 
-        PosXYZT pos4(7.60679, 53.93277, 10.155, 171.0);
-        PosXYZT pos5(7.61170, 53.93686, 10.158, 172.0);
-        PosXYZT pos6(7.61577, 53.93547, 10.651, 173.0);
+        LocationXYZT pos4(7.60679, 53.93277, 10.155, 171.0);
+        LocationXYZT pos5(7.61170, 53.93686, 10.158, 172.0);
+        LocationXYZT pos6(7.61577, 53.93547, 10.651, 173.0);
 
-        vector<PosXYZT> interiorRing({pos4, pos5, pos6, pos4});
+        vector<LocationXYZT> interiorRing({pos4, pos5, pos6, pos4});
         polygon.push_back(interiorRing);
 
         bytes_t twkb = factory.makePolygon(polygon, 6, 3, 0, false);
@@ -366,18 +366,18 @@ TEST_CASE("Creating polygon geometries") {
     SECTION("Creating polygon XYZT - with bbox") {
         GeomFactory factory;
 
-        PosXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
-        PosXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
-        PosXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
+        LocationXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
+        LocationXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
+        LocationXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
 
-        vector<PosXYZT> exteriorRing({pos1, pos2, pos3, pos1});
-        vector<vector<PosXYZT>> polygon({exteriorRing});
+        vector<LocationXYZT> exteriorRing({pos1, pos2, pos3, pos1});
+        vector<vector<LocationXYZT>> polygon({exteriorRing});
 
-        PosXYZT pos4(7.60679, 53.93277, 10.155, 171.0);
-        PosXYZT pos5(7.61170, 53.93686, 10.158, 172.0);
-        PosXYZT pos6(7.61577, 53.93547, 10.651, 173.0);
+        LocationXYZT pos4(7.60679, 53.93277, 10.155, 171.0);
+        LocationXYZT pos5(7.61170, 53.93686, 10.158, 172.0);
+        LocationXYZT pos6(7.61577, 53.93547, 10.651, 173.0);
 
-        vector<PosXYZT> interiorRing({pos4, pos5, pos6, pos4});
+        vector<LocationXYZT> interiorRing({pos4, pos5, pos6, pos4});
         polygon.push_back(interiorRing);
 
         bytes_t twkb = factory.makePolygon(polygon, 6, 3, 0, true);
@@ -401,11 +401,11 @@ TEST_CASE("Creating multipoint geometries") {
     SECTION("Creating multipoint XY") {
         GeomFactory factory;
 
-        PosXY pos1(7.625752, 53.942254);
-        PosXY pos2(7.615752, 53.932254);
-        PosXY pos3(7.532752, 53.915354);
+        LocationXY pos1(7.625752, 53.942254);
+        LocationXY pos2(7.615752, 53.932254);
+        LocationXY pos3(7.532752, 53.915354);
 
-        vector<PosXY> points({pos1, pos2, pos3});
+        vector<LocationXY> points({pos1, pos2, pos3});
 
         bytes_t twkb = factory.makeMultiPoint(points, 6, false);
 
@@ -420,11 +420,11 @@ TEST_CASE("Creating multipoint geometries") {
     SECTION("Creating multipoint XY - with bbox") {
         GeomFactory factory;
 
-        PosXY pos1(7.625752, 53.942254);
-        PosXY pos2(7.615752, 53.932254);
-        PosXY pos3(7.532752, 53.915354);
+        LocationXY pos1(7.625752, 53.942254);
+        LocationXY pos2(7.615752, 53.932254);
+        LocationXY pos3(7.532752, 53.915354);
 
-        vector<PosXY> points({pos1, pos2, pos3});
+        vector<LocationXY> points({pos1, pos2, pos3});
 
         bytes_t twkb = factory.makeMultiPoint(points, 6, true);
 
@@ -440,11 +440,11 @@ TEST_CASE("Creating multipoint geometries") {
     SECTION("Creating multipoint XYZ") {
         GeomFactory factory;
 
-        PosXYZ pos1(7.625752, 53.942254, 10.175);
-        PosXYZ pos2(7.615752, 53.932254, 10.231);
-        PosXYZ pos3(7.532752, 53.915354, 10.335);
+        LocationXYZ pos1(7.625752, 53.942254, 10.175);
+        LocationXYZ pos2(7.615752, 53.932254, 10.231);
+        LocationXYZ pos3(7.532752, 53.915354, 10.335);
 
-        vector<PosXYZ> points({pos1, pos2, pos3});
+        vector<LocationXYZ> points({pos1, pos2, pos3});
 
         bytes_t twkb = factory.makeMultiPoint(points, 6, 3, false);
 
@@ -460,11 +460,11 @@ TEST_CASE("Creating multipoint geometries") {
     SECTION("Creating multipoint XYZ - with bbox") {
         GeomFactory factory;
 
-        PosXYZ pos1(7.625752, 53.942254, 10.175);
-        PosXYZ pos2(7.615752, 53.932254, 10.231);
-        PosXYZ pos3(7.532752, 53.915354, 10.335);
+        LocationXYZ pos1(7.625752, 53.942254, 10.175);
+        LocationXYZ pos2(7.615752, 53.932254, 10.231);
+        LocationXYZ pos3(7.532752, 53.915354, 10.335);
 
-        vector<PosXYZ> points({pos1, pos2, pos3});
+        vector<LocationXYZ> points({pos1, pos2, pos3});
 
         bytes_t twkb = factory.makeMultiPoint(points, 6, 3, true);
 
@@ -481,11 +481,11 @@ TEST_CASE("Creating multipoint geometries") {
     SECTION("Creating multipoint XYZT") {
         GeomFactory factory;
 
-        PosXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
-        PosXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
-        PosXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
+        LocationXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
+        LocationXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
+        LocationXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
 
-        vector<PosXYZT> points({pos1, pos2, pos3});
+        vector<LocationXYZT> points({pos1, pos2, pos3});
 
         bytes_t twkb = factory.makeMultiPoint(points, 6, 3, 0, false);
 
@@ -501,11 +501,11 @@ TEST_CASE("Creating multipoint geometries") {
     SECTION("Creating multipoint XYZT - with bbox") {
         GeomFactory factory;
 
-        PosXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
-        PosXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
-        PosXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
+        LocationXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
+        LocationXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
+        LocationXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
 
-        vector<PosXYZT> points({pos1, pos2, pos3});
+        vector<LocationXYZT> points({pos1, pos2, pos3});
 
         bytes_t twkb = factory.makeMultiPoint(points, 6, 3, 0, true);
 
@@ -527,19 +527,19 @@ TEST_CASE("Creating multiline geometries") {
     SECTION("Creating multiline XYZT") {
         GeomFactory factory;
 
-        PosXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
-        PosXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
-        PosXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
+        LocationXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
+        LocationXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
+        LocationXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
 
-        vector<PosXYZT> line1({pos1, pos2, pos3});
+        vector<LocationXYZT> line1({pos1, pos2, pos3});
 
-        PosXYZT pos4(7.60679, 53.93277, 10.155, 171.0);
-        PosXYZT pos5(7.61170, 53.93686, 10.158, 172.0);
-        PosXYZT pos6(7.61577, 53.93547, 10.651, 173.0);
+        LocationXYZT pos4(7.60679, 53.93277, 10.155, 171.0);
+        LocationXYZT pos5(7.61170, 53.93686, 10.158, 172.0);
+        LocationXYZT pos6(7.61577, 53.93547, 10.651, 173.0);
 
-        vector<PosXYZT> line2({pos4, pos5, pos6});
+        vector<LocationXYZT> line2({pos4, pos5, pos6});
 
-        vector<vector<PosXYZT>> lines({line1, line2});
+        vector<vector<LocationXYZT>> lines({line1, line2});
 
         bytes_t twkb = factory.makeMultiLine(lines, 6, 3, 0, false);
 
@@ -557,19 +557,19 @@ TEST_CASE("Creating multiline geometries") {
     SECTION("Creating multiline XYZT - with bbox") {
         GeomFactory factory;
 
-        PosXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
-        PosXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
-        PosXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
+        LocationXYZT pos1(7.625752, 53.942254, 10.175, 164.0);
+        LocationXYZT pos2(7.615752, 53.932254, 10.231, 165.0);
+        LocationXYZT pos3(7.532752, 53.915354, 10.335, 166.0);
 
-        vector<PosXYZT> line1({pos1, pos2, pos3});
+        vector<LocationXYZT> line1({pos1, pos2, pos3});
 
-        PosXYZT pos4(7.60679, 53.93277, 10.155, 171.0);
-        PosXYZT pos5(7.61170, 53.93686, 10.158, 172.0);
-        PosXYZT pos6(7.61577, 53.93547, 10.651, 173.0);
+        LocationXYZT pos4(7.60679, 53.93277, 10.155, 171.0);
+        LocationXYZT pos5(7.61170, 53.93686, 10.158, 172.0);
+        LocationXYZT pos6(7.61577, 53.93547, 10.651, 173.0);
 
-        vector<PosXYZT> line2({pos4, pos5, pos6});
+        vector<LocationXYZT> line2({pos4, pos5, pos6});
 
-        vector<vector<PosXYZT>> lines({line1, line2});
+        vector<vector<LocationXYZT>> lines({line1, line2});
 
         bytes_t twkb = factory.makeMultiLine(lines, 6, 3, 0, true);
 
@@ -587,19 +587,19 @@ TEST_CASE("Creating multiline geometries") {
     SECTION("Creating multiline XYZ") {
         GeomFactory factory;
 
-        PosXYZ pos1(7.625752, 53.942254, 10.175);
-        PosXYZ pos2(7.615752, 53.932254, 10.231);
-        PosXYZ pos3(7.532752, 53.915354, 10.335);
+        LocationXYZ pos1(7.625752, 53.942254, 10.175);
+        LocationXYZ pos2(7.615752, 53.932254, 10.231);
+        LocationXYZ pos3(7.532752, 53.915354, 10.335);
 
-        vector<PosXYZ> line1({pos1, pos2, pos3});
+        vector<LocationXYZ> line1({pos1, pos2, pos3});
 
-        PosXYZ pos4(7.60679, 53.93277, 10.155);
-        PosXYZ pos5(7.61170, 53.93686, 10.158);
-        PosXYZ pos6(7.61577, 53.93547, 10.651);
+        LocationXYZ pos4(7.60679, 53.93277, 10.155);
+        LocationXYZ pos5(7.61170, 53.93686, 10.158);
+        LocationXYZ pos6(7.61577, 53.93547, 10.651);
 
-        vector<PosXYZ> line2({pos4, pos5, pos6});
+        vector<LocationXYZ> line2({pos4, pos5, pos6});
 
-        vector<vector<PosXYZ>> lines({line1, line2});
+        vector<vector<LocationXYZ>> lines({line1, line2});
 
         bytes_t twkb = factory.makeMultiLine(lines, 6, 3, false);
 
@@ -616,19 +616,19 @@ TEST_CASE("Creating multiline geometries") {
     SECTION("Creating multiline XYZ - with bbox") {
         GeomFactory factory;
 
-        PosXYZ pos1(7.625752, 53.942254, 10.175);
-        PosXYZ pos2(7.615752, 53.932254, 10.231);
-        PosXYZ pos3(7.532752, 53.915354, 10.335);
+        LocationXYZ pos1(7.625752, 53.942254, 10.175);
+        LocationXYZ pos2(7.615752, 53.932254, 10.231);
+        LocationXYZ pos3(7.532752, 53.915354, 10.335);
 
-        vector<PosXYZ> line1({pos1, pos2, pos3});
+        vector<LocationXYZ> line1({pos1, pos2, pos3});
 
-        PosXYZ pos4(7.60679, 53.93277, 10.155);
-        PosXYZ pos5(7.61170, 53.93686, 10.158);
-        PosXYZ pos6(7.61577, 53.93547, 10.651);
+        LocationXYZ pos4(7.60679, 53.93277, 10.155);
+        LocationXYZ pos5(7.61170, 53.93686, 10.158);
+        LocationXYZ pos6(7.61577, 53.93547, 10.651);
 
-        vector<PosXYZ> line2({pos4, pos5, pos6});
+        vector<LocationXYZ> line2({pos4, pos5, pos6});
 
-        vector<vector<PosXYZ>> lines({line1, line2});
+        vector<vector<LocationXYZ>> lines({line1, line2});
 
         bytes_t twkb = factory.makeMultiLine(lines, 6, 3, true);
 
@@ -646,19 +646,19 @@ TEST_CASE("Creating multiline geometries") {
     SECTION("Creating multiline XY") {
         GeomFactory factory;
 
-        PosXY pos1(7.625752, 53.942254);
-        PosXY pos2(7.615752, 53.932254);
-        PosXY pos3(7.532752, 53.915354);
+        LocationXY pos1(7.625752, 53.942254);
+        LocationXY pos2(7.615752, 53.932254);
+        LocationXY pos3(7.532752, 53.915354);
 
-        vector<PosXY> line1({pos1, pos2, pos3});
+        vector<LocationXY> line1({pos1, pos2, pos3});
 
-        PosXY pos4(7.60679, 53.93277);
-        PosXY pos5(7.61170, 53.93686);
-        PosXY pos6(7.61577, 53.93547);
+        LocationXY pos4(7.60679, 53.93277);
+        LocationXY pos5(7.61170, 53.93686);
+        LocationXY pos6(7.61577, 53.93547);
 
-        vector<PosXY> line2({pos4, pos5, pos6});
+        vector<LocationXY> line2({pos4, pos5, pos6});
 
-        vector<vector<PosXY>> lines({line1, line2});
+        vector<vector<LocationXY>> lines({line1, line2});
 
         bytes_t twkb = factory.makeMultiLine(lines, 6, false);
 
@@ -675,19 +675,19 @@ TEST_CASE("Creating multiline geometries") {
     SECTION("Creating multiline XY - with bbox") {
         GeomFactory factory;
 
-        PosXY pos1(7.625752, 53.942254);
-        PosXY pos2(7.615752, 53.932254);
-        PosXY pos3(7.532752, 53.915354);
+        LocationXY pos1(7.625752, 53.942254);
+        LocationXY pos2(7.615752, 53.932254);
+        LocationXY pos3(7.532752, 53.915354);
 
-        vector<PosXY> line1({pos1, pos2, pos3});
+        vector<LocationXY> line1({pos1, pos2, pos3});
 
-        PosXY pos4(7.60679, 53.93277);
-        PosXY pos5(7.61170, 53.93686);
-        PosXY pos6(7.61577, 53.93547);
+        LocationXY pos4(7.60679, 53.93277);
+        LocationXY pos5(7.61170, 53.93686);
+        LocationXY pos6(7.61577, 53.93547);
 
-        vector<PosXY> line2({pos4, pos5, pos6});
+        vector<LocationXY> line2({pos4, pos5, pos6});
 
-        vector<vector<PosXY>> lines({line1, line2});
+        vector<vector<LocationXY>> lines({line1, line2});
 
         bytes_t twkb = factory.makeMultiLine(lines, 6, true);
 
