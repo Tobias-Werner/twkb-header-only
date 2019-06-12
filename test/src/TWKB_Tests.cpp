@@ -14,30 +14,6 @@ using namespace TWKB;
 using namespace std;
 
 
-TEST_CASE("Binary encoding") {
-
-    SECTION("Varint encoding") {
-
-        vector<uint32_t> testValues({0, 300, 12434, 324345345});
-
-        for (auto &testValue : testValues) {
-            bytes_t bytes = GeomFactory::encodeVarint(testValue);
-            CHECK(GeomFactory::decodeVarint(bytes) == testValue);
-        }
-
-    }
-
-    SECTION("ZigZag encoding") {
-        vector<int> testValues({0, 300, -300, 2545645, -2545645});
-
-        for (auto &testValue : testValues) {
-            unsigned int encoded = GeomFactory::encodeZigZag(testValue);
-            CHECK(GeomFactory::decodeZigZag(encoded) == testValue);
-        }
-    }
-
-}
-
 
 TEST_CASE("Creating point geometries") {
 

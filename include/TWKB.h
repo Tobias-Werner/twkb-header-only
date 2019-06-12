@@ -34,7 +34,7 @@ namespace TWKB {
 
     class GeomFactory {
 
-    public:
+    private:
 
         static int32_t shrink(const double &value, const signed char &precision) {
 
@@ -138,6 +138,7 @@ namespace TWKB {
             return twkb;
         }
 
+    public:
 
         bytes_t makePoint(const LocationXY &location, const signed char &precisionXY) {
 
