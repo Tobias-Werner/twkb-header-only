@@ -5,13 +5,13 @@
 #ifndef TWKB_HEADER_ONLY_TWKB_H
 #define TWKB_HEADER_ONLY_TWKB_H
 
-#include <vector>
+#include <list>
 
 namespace TWKB {
 
     using namespace std;
 
-    using bytes_t = vector<unsigned char>;
+    using bytes_t = list<u_char>;
 
     struct LocationXY {
         double x, y;
@@ -34,69 +34,34 @@ namespace TWKB {
 
     class GeomFactory {
 
-    private:
+    public:
 
-        void setTypeAndPrecision(bytes_t &twkb, const unsigned char &type, const signed char &precisionXY) {
-            auto &header = twkb[0];
-            header |= type;
-            header |= encodeZigZag(precisionXY) << 4;
-
-        }
-
-        void setMetadataBits(bytes_t &twkb, const bool &bbox, const bool &sizes, const bool &idlist, const bool &extendedDimensions, const bool &emptyGeom) {
-            auto &metadataHeader = twkb[1];
-            metadataHeader |= (bbox) ? 0x01 : 0x00;
-            metadataHeader |= (sizes) ? 0x02 : 0x00;
-            metadataHeader |= (idlist) ? 0x04 : 0x00;
-            metadataHeader |= (extendedDimensions) ? 0x08 : 0x00;
-            metadataHeader |= (emptyGeom) ? 0x10 : 0x00;
-        }
-
-        void addZDimensions(bytes_t &twkb, const unsigned char &precisionZ) {
-            unsigned char extendedInformation = 0x01;
-            extendedInformation |= (precisionZ << 2);
-            twkb.push_back(extendedInformation);
-        }
-
-        void addZTDimensions(bytes_t &twkb, const unsigned char &precisionZ, const unsigned char &precisionT) {
-            unsigned char extendedInformation = 0x03;
-            extendedInformation |= (precisionZ << 2);
-            extendedInformation |= (precisionT << 5);
-            twkb.push_back(extendedInformation);
-        }
-
-        int32_t shrink(const double &value, const signed char &precision) {
+        static int32_t shrink(const double &value, const signed char &precision) {
 
             const bool negative = (precision < 0);
-            unsigned char p = (negative) ? static_cast<unsigned char>(-precision) : static_cast<unsigned char>(precision);
-
-            auto powed = pow10(p);
-
-            auto unrounded = (negative) ? powed / value : powed * value;
-
-            auto rounded = round(unrounded);
-
-            return static_cast<int32_t>(rounded);
+            u_char p = (negative) ? static_cast<u_char>(-precision) : static_cast<u_char>(precision);
+            auto unrounded = (negative) ? pow10(p) / value : pow10(p) * value;
+            return static_cast<int32_t>(round(unrounded));
 
         }
 
-        bytes_t encode(const double &value, const signed char &precision) {
+        static bytes_t encode(const double &value, const signed char &precision) {
             return encodeVarint(encodeZigZag(shrink(value, precision)));
         }
 
-        void append(bytes_t &twkb) {
+        static void append(bytes_t &twkb) {
 
         }
 
+
         template<typename T, typename... Types>
-        void append(bytes_t &twkb, const T &var1, const Types... var2) {
+        static void append(bytes_t &twkb, const T &var1, const Types... var2) {
             twkb.insert(twkb.end(), var1.begin(), var1.end());
             append(twkb, var2...);
         }
 
-    public:
 
-        static uint32_t pow10(unsigned char exponent) {
+        static uint32_t pow10(u_char exponent) {
             static uint32_t pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000};
             return pow10[exponent];
         }
@@ -105,8 +70,9 @@ namespace TWKB {
 
             int32_t result = 0x00;
 
-            for (size_t i = bytes.size(); i > 0; i--) {
-                result |= (bytes[i - 1] & 0x7F);
+            size_t i = bytes.size();
+            for (auto elem = bytes.rbegin(); elem != bytes.rend(); ++elem, i--) {
+                result |= (*elem & 0x7F);
                 result <<= (i - 1 > 0) ? 7 : 0;
             }
 
@@ -134,16 +100,48 @@ namespace TWKB {
             return -(value & 1) ^ (value >> 1);
         }
 
+        static bytes_t createHeader(const u_char &type, const signed char &precisionXY, const bool &bbox, const bool &sizes, const bool &idlist, const bool &extendedDimensions,
+                                    const bool &emptyGeom) {
+
+            u_char header = type | encodeZigZag(precisionXY) << 4;
+            bytes_t twkb({header});
+
+            u_char metadataHeader = 0x00;
+            metadataHeader |= (bbox) ? 0x01 : 0x00;
+            metadataHeader |= (sizes) ? 0x02 : 0x00;
+            metadataHeader |= (idlist) ? 0x04 : 0x00;
+            metadataHeader |= (extendedDimensions) ? 0x08 : 0x00;
+            metadataHeader |= (emptyGeom) ? 0x10 : 0x00;
+            twkb.push_back(metadataHeader);
+
+            return twkb;
+        }
+
+        static bytes_t createHeader(const u_char &type, const signed char &precisionXY, const bool &bbox, const bool &sizes, const bool &idlist, const bool &extendedDimensions,
+                                    const bool &emptyGeom, const u_char &precisionZ) {
+
+            auto twkb = createHeader(type, precisionXY, bbox, sizes, idlist, extendedDimensions, emptyGeom);
+            u_char extendedInformation = 0x01;
+            extendedInformation |= (precisionZ << 2);
+            twkb.push_back(extendedInformation);
+            return twkb;
+        }
+
+        static bytes_t createHeader(const u_char &type, const signed char &precisionXY, const bool &bbox, const bool &sizes, const bool &idlist, const bool &extendedDimensions,
+                                    const bool &emptyGeom, const u_char &precisionZ, const u_char &precisionT) {
+
+            auto twkb = createHeader(type, precisionXY, bbox, sizes, idlist, extendedDimensions, emptyGeom);
+            u_char extendedInformation = 0x03;
+            extendedInformation |= (precisionZ << 2);
+            extendedInformation |= (precisionT << 5);
+            twkb.push_back(extendedInformation);
+            return twkb;
+        }
+
+
         bytes_t makePoint(const LocationXY &location, const signed char &precisionXY) {
 
-            bytes_t twkb({0x00, 0x00});
-
-            // Set type and precision
-            setTypeAndPrecision(twkb, 0x01, precisionXY);
-
-            // Prepare metadata header
-            // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, false, false, false, false, false);
+            bytes_t twkb = createHeader(0x01, precisionXY, false, false, false, false, false);
 
             // Locations
             auto x = encode(location.x, precisionXY);
@@ -154,18 +152,9 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makePoint(const LocationXYZ &location, const signed char &precisionXY, const unsigned char &precisionZ) {
+        bytes_t makePoint(const LocationXYZ &location, const signed char &precisionXY, const u_char &precisionZ) {
 
-            bytes_t twkb({0x00, 0x00});
-
-            // Set type and precision
-            setTypeAndPrecision(twkb, 0x01, precisionXY);
-
-            // Prepare metadata header
-            // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, false, false, false, true, false);
-
-            addZDimensions(twkb, precisionZ);
+            bytes_t twkb = createHeader(0x01, precisionXY, false, false, false, true, false, precisionZ);
 
             auto x = encode(location.x, precisionXY);
             auto y = encode(location.y, precisionXY);
@@ -176,18 +165,9 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makePoint(const LocationXYZT &location, const signed char &precisionXY, const unsigned char &precisionZ, const unsigned char &precisionT) {
+        bytes_t makePoint(const LocationXYZT &location, const signed char &precisionXY, const u_char &precisionZ, const u_char &precisionT) {
 
-            bytes_t twkb({0x00, 0x00});
-
-            // Set type and precision
-            setTypeAndPrecision(twkb, 0x01, precisionXY);
-
-            // Prepare metadata header
-            // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, false, false, false, true, false);
-
-            addZTDimensions(twkb, precisionZ, precisionT);
+            bytes_t twkb = createHeader(0x01, precisionXY, false, false, false, true, false, precisionZ, precisionT);
 
             auto x = encode(location.x, precisionXY);
             auto y = encode(location.y, precisionXY);
@@ -200,14 +180,8 @@ namespace TWKB {
         }
 
         bytes_t makeLine(const vector<LocationXY> &locations, const signed char &precisionXY, const bool &bbox) {
-            bytes_t twkb({0x00, 0x00});
 
-            // Set type and precision
-            setTypeAndPrecision(twkb, 0x02, precisionXY);
-
-            // Prepare metadata header
-            // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, bbox, false, false, false, false);
+            bytes_t twkb = createHeader(0x02, precisionXY, bbox, false, false, false, false);
 
             if (bbox) {
 
@@ -266,20 +240,10 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeLine(const vector<LocationXYZ> &locations, const signed char &precisionXY, const unsigned char &precisionZ, const bool &bbox) {
-            bytes_t twkb({0x00, 0x00});
+        bytes_t makeLine(const vector<LocationXYZ> &locations, const signed char &precisionXY, const u_char &precisionZ, const bool &bbox) {
 
-            // Set type and precision
-            setTypeAndPrecision(twkb, 0x02, precisionXY);
+            bytes_t twkb = createHeader(0x02, precisionXY, bbox, false, false, true, false, precisionZ);
 
-            // Prepare metadata header
-            // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, bbox, false, false, true, false);
-
-            // Add extendet dimension information
-            addZDimensions(twkb, precisionZ);
-
-            // Add bounding box - if selected
             if (bbox) {
 
                 int32_t minx = shrink(locations.front().x, precisionXY);
@@ -349,20 +313,11 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeLine(const vector<LocationXYZT> &locations, const signed char &precisionXY, const unsigned char &precisionZ, const unsigned char &precisionT, const bool &bbox) {
-            bytes_t twkb({0x00, 0x00});
+        bytes_t
+        makeLine(const vector<LocationXYZT> &locations, const signed char &precisionXY, const u_char &precisionZ, const u_char &precisionT, const bool &bbox) {
 
-            // Set type and precision
-            setTypeAndPrecision(twkb, 0x02, precisionXY);
+            bytes_t twkb = createHeader(0x02, precisionXY, bbox, false, false, true, false, precisionZ, precisionT);
 
-            // Prepare metadata header
-            // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, bbox, false, false, true, false);
-
-            // Add extendet dimension information
-            addZTDimensions(twkb, precisionZ, precisionT);
-
-            // Add bounding box - if selected
             if (bbox) {
 
                 int32_t minx = shrink(locations.front().x, precisionXY);
@@ -445,15 +400,8 @@ namespace TWKB {
         }
 
         bytes_t makePolygon(const vector<vector<LocationXY>> &rings, const signed char &precisionXY, const bool &bbox) {
-            bytes_t twkb({0x00, 0x00});
 
-            // Set type and precision
-            setTypeAndPrecision(twkb, 0x03, precisionXY);
-
-            // Prepare metadata header
-            // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, bbox, false, false, false, false);
-
+            bytes_t twkb = createHeader(0x03, precisionXY, bbox, false, false, false, false);
 
             if (bbox) {
 
@@ -525,17 +473,9 @@ namespace TWKB {
 
         bytes_t
 
-        makePolygon(const vector<vector<LocationXYZ>> &rings, const signed char &precisionXY, const unsigned char &precisionZ, const bool &bbox) {
-            bytes_t twkb({0x00, 0x00});
+        makePolygon(const vector<vector<LocationXYZ>> &rings, const signed char &precisionXY, const u_char &precisionZ, const bool &bbox) {
 
-            // Set type and precision
-            setTypeAndPrecision(twkb, 0x03, precisionXY);
-
-            // Prepare metadata header
-            // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, bbox, false, false, true, false);
-
-            addZDimensions(twkb, precisionZ);
+            bytes_t twkb = createHeader(0x03, precisionXY, bbox, false, false, true, false, precisionZ);
 
             if (bbox) {
 
@@ -616,17 +556,9 @@ namespace TWKB {
         }
 
         bytes_t
-        makePolygon(const vector<vector<LocationXYZT>> &rings, const signed char &precisionXY, const unsigned char &precisionZ, const unsigned char &precisionT, const bool &bbox) {
-            bytes_t twkb({0x00, 0x00});
+        makePolygon(const vector<vector<LocationXYZT>> &rings, const signed char &precisionXY, const u_char &precisionZ, const u_char &precisionT, const bool &bbox) {
 
-            // Set type and precision
-            setTypeAndPrecision(twkb, 0x03, precisionXY);
-
-            // Prepare metadata header
-            // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, bbox, false, false, true, false);
-
-            addZTDimensions(twkb, precisionZ, precisionT);
+            bytes_t twkb = createHeader(0x03, precisionXY, bbox, false, false, true, false, precisionZ, precisionT);
 
             if (bbox) {
 
@@ -721,14 +653,7 @@ namespace TWKB {
 
         bytes_t makeMultiPoint(const vector<LocationXY> &locations, const signed char &precisionXY, const bool &bbox) {
 
-            bytes_t twkb({0x00, 0x00});
-
-            // Set type and precision
-            setTypeAndPrecision(twkb, 0x04, precisionXY);
-
-            // Prepare metadata header
-            // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, bbox, false, false, false, false);
+            bytes_t twkb = createHeader(0x04, precisionXY, bbox, false, false, false, false);
 
             if (bbox) {
 
@@ -790,18 +715,9 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiPoint(const vector<LocationXYZ> &locations, const signed char &precisionXY, const unsigned char &precisionZ, const bool &bbox) {
+        bytes_t makeMultiPoint(const vector<LocationXYZ> &locations, const signed char &precisionXY, const u_char &precisionZ, const bool &bbox) {
 
-            bytes_t twkb({0x00, 0x00});
-
-            // Set type and precision
-            setTypeAndPrecision(twkb, 0x04, precisionXY);
-
-            // Prepare metadata header
-            // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, bbox, false, false, true, false);
-
-            addZDimensions(twkb, precisionZ);
+            bytes_t twkb = createHeader(0x04, precisionXY, bbox, false, false, true, false, precisionZ);
 
             if (bbox) {
 
@@ -876,18 +792,9 @@ namespace TWKB {
         }
 
         bytes_t
-        makeMultiPoint(const vector<LocationXYZT> &locations, const signed char &precisionXY, const unsigned char &precisionZ, const unsigned char &precisionT, const bool &bbox) {
+        makeMultiPoint(const vector<LocationXYZT> &locations, const signed char &precisionXY, const u_char &precisionZ, const u_char &precisionT, const bool &bbox) {
 
-            bytes_t twkb({0x00, 0x00});
-
-            // Set type and precision
-            setTypeAndPrecision(twkb, 0x04, precisionXY);
-
-            // Prepare metadata header
-            // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, bbox, false, false, true, false);
-
-            addZTDimensions(twkb, precisionZ, precisionT);
+            bytes_t twkb = createHeader(0x04, precisionXY, bbox, false, false, true, false, precisionZ, precisionT);
 
             if (bbox) {
 
@@ -973,20 +880,11 @@ namespace TWKB {
         }
 
         bytes_t
-        makeMultiLine(const vector<vector<LocationXYZT>> &lines, const signed char &precisionXY, const unsigned char &precisionZ, const unsigned char &precisionT, const bool &bbox) {
-            bytes_t twkb({0x00, 0x00});
+        makeMultiLine(const vector<vector<LocationXYZT>> &lines, const signed char &precisionXY, const u_char &precisionZ, const u_char &precisionT,
+                      const bool &bbox) {
 
-            // Set type and precision
-            setTypeAndPrecision(twkb, 0x05, precisionXY);
+            bytes_t twkb = createHeader(0x05, precisionXY, bbox, false, false, true, false, precisionZ, precisionT);
 
-            // Prepare metadata header
-            // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, bbox, false, false, true, false);
-
-            // Add extendet dimension information
-            addZTDimensions(twkb, precisionZ, precisionT);
-
-            // Add bounding box - if selected
             if (bbox) {
 
                 int32_t minx = shrink(lines.front().front().x, precisionXY);
@@ -1071,20 +969,10 @@ namespace TWKB {
             return twkb;
         }
 
-        bytes_t makeMultiLine(const vector<vector<LocationXYZ>> &lines, const signed char &precisionXY, const unsigned char &precisionZ, const bool &bbox) {
-            bytes_t twkb({0x00, 0x00});
+        bytes_t makeMultiLine(const vector<vector<LocationXYZ>> &lines, const signed char &precisionXY, const u_char &precisionZ, const bool &bbox) {
 
-            // Set type and precision
-            setTypeAndPrecision(twkb, 0x05, precisionXY);
+            bytes_t twkb = createHeader(0x05, precisionXY, bbox, false, false, true, false, precisionZ);
 
-            // Prepare metadata header
-            // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, bbox, false, false, true, false);
-
-            // Add extendet dimension information
-            addZDimensions(twkb, precisionZ);
-
-            // Add bounding box - if selected
             if (bbox) {
 
                 int32_t minx = shrink(lines.front().front().x, precisionXY);
@@ -1158,16 +1046,9 @@ namespace TWKB {
         }
 
         bytes_t makeMultiLine(const vector<vector<LocationXY>> &lines, const signed char &precisionXY, const bool &bbox) {
-            bytes_t twkb({0x00, 0x00});
 
-            // Set type and precision
-            setTypeAndPrecision(twkb, 0x05, precisionXY);
+            bytes_t twkb = createHeader(0x05, precisionXY, bbox, false, false, false, false);
 
-            // Prepare metadata header
-            // bbox | size | idlist | extended dimensions | empty geom
-            setMetadataBits(twkb, bbox, false, false, false, false);
-
-            // Add bounding box - if selected
             if (bbox) {
 
                 int32_t minx = shrink(lines.front().front().x, precisionXY);
